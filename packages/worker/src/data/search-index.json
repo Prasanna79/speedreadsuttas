@@ -1,0 +1,64 @@
+[
+  {
+    "uid": "an4.159",
+    "c": "an",
+    "t": "Nuns",
+    "p": "Bhikkhunīsutta",
+    "a": [
+      "nuns",
+      "bhikkhunisutta"
+    ]
+  },
+  {
+    "uid": "dhp1-20",
+    "c": "dhp",
+    "t": "Pairs",
+    "p": "Yamakavagga",
+    "a": [
+      "pairs",
+      "yamakavagga"
+    ]
+  },
+  {
+    "uid": "mn1",
+    "c": "mn",
+    "t": "The Root of All Things",
+    "p": "Mūlapariyāyasutta",
+    "a": [
+      "the root of all things",
+      "therootofallthings",
+      "mulapariyayasutta"
+    ]
+  },
+  {
+    "uid": "mn2",
+    "c": "mn",
+    "t": "Sabbāsavasutta",
+    "p": "Sabbāsavasutta",
+    "a": [
+      "sabbasavasutta"
+    ]
+  },
+  {
+    "uid": "sn12.2",
+    "c": "sn",
+    "t": "Dependent Origination",
+    "p": "Paṭiccasamuppādasutta",
+    "a": [
+      "dependent origination",
+      "dependentorigination",
+      "paticcasamuppadasutta"
+    ]
+  },
+  {
+    "uid": "thag1.1",
+    "c": "thag",
+    "t": "Single Verses",
+    "p": "Ekuddanipāta",
+    "a": [
+      "single verses",
+      "singleverses",
+      "ekuddanipata"
+    ]
+  }
+]

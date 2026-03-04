@@ -1,0 +1,22 @@
+{
+  "scpub-en-sujato": {
+    "author_uid": "sujato",
+    "translation_lang": "en",
+    "licence_type": "CC0 1.0",
+    "edition": [
+      {
+        "publisher": "SuttaCentral"
+      }
+    ]
+  },
+  "scpub-de-sabbamitta": {
+    "author_uid": "sabbamitta",
+    "translation_lang": "de",
+    "licence": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "edition": [
+      {
+        "publisher": "SuttaCentral"
+      }
+    ]
+  }
+}

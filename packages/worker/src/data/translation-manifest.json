@@ -1,0 +1,122 @@
+{
+  "an4.159": [
+    {
+      "lang": "en",
+      "langName": "English",
+      "author": "sujato",
+      "authorName": "Bhikkhu Sujato",
+      "isRoot": false,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    },
+    {
+      "lang": "pli",
+      "langName": "Pāli",
+      "author": "ms",
+      "authorName": "Mahāsaṅgīti Tipiṭaka",
+      "isRoot": true,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    }
+  ],
+  "dhp1-20": [
+    {
+      "lang": "en",
+      "langName": "English",
+      "author": "sujato",
+      "authorName": "Bhikkhu Sujato",
+      "isRoot": false,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    },
+    {
+      "lang": "pli",
+      "langName": "Pāli",
+      "author": "ms",
+      "authorName": "Mahāsaṅgīti Tipiṭaka",
+      "isRoot": true,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    }
+  ],
+  "mn1": [
+    {
+      "lang": "en",
+      "langName": "English",
+      "author": "sujato",
+      "authorName": "Bhikkhu Sujato",
+      "isRoot": false,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    },
+    {
+      "lang": "de",
+      "langName": "German",
+      "author": "sabbamitta",
+      "authorName": "Sabbamitta",
+      "isRoot": false,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    },
+    {
+      "lang": "pli",
+      "langName": "Pāli",
+      "author": "ms",
+      "authorName": "Mahāsaṅgīti Tipiṭaka",
+      "isRoot": true,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    }
+  ],
+  "mn2": [
+    {
+      "lang": "pli",
+      "langName": "Pāli",
+      "author": "ms",
+      "authorName": "Mahāsaṅgīti Tipiṭaka",
+      "isRoot": true,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    }
+  ],
+  "sn12.2": [
+    {
+      "lang": "en",
+      "langName": "English",
+      "author": "sujato",
+      "authorName": "Bhikkhu Sujato",
+      "isRoot": false,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    },
+    {
+      "lang": "pli",
+      "langName": "Pāli",
+      "author": "ms",
+      "authorName": "Mahāsaṅgīti Tipiṭaka",
+      "isRoot": true,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    }
+  ],
+  "thag1.1": [
+    {
+      "lang": "en",
+      "langName": "English",
+      "author": "sujato",
+      "authorName": "Bhikkhu Sujato",
+      "isRoot": false,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    },
+    {
+      "lang": "pli",
+      "langName": "Pāli",
+      "author": "ms",
+      "authorName": "Mahāsaṅgīti Tipiṭaka",
+      "isRoot": true,
+      "publication": "SuttaCentral",
+      "licence": "CC0 1.0"
+    }
+  ]
+}
