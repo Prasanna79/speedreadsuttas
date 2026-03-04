@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@palispeedread/shared": "workspace:*"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "wrangler dev --port 8787",
