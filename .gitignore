@@ -1,0 +1,13 @@
+node_modules
+.pnpm-store
+coverage
+.dist
+.vite
+.wrangler
+.DS_Store
+.env
+.env.*
+packages/worker/.wrangler
+packages/worker/dist
+packages/web/dist
+bilara-data

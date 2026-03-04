@@ -1,0 +1,8 @@
+name = "palispeedread-worker"
+main = "src/index.ts"
+compatibility_date = "2025-07-18"
+
+[[r2_buckets]]
+binding = "SUTTA_TEXT"
+bucket_name = "speedreadsuttas-data"
+preview_bucket_name = "speedreadsuttas-data-preview"
