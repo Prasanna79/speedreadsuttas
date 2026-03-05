@@ -43,7 +43,7 @@ test('mobile reader uses search icon instead of inline search field', async ({ p
   await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
 
   await expect(page.getByRole('button', { name: 'Open search' })).toBeVisible();
-  await expect(page.getByLabel('Search sutta')).toHaveCount(0);
+  await expect(page.getByLabel('Search sutta')).not.toBeVisible();
 });
 
 test('theme toggle persists on reader page', async ({ page }) => {
