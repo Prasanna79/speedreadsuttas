@@ -81,4 +81,16 @@ describe('tokenize', () => {
     expect(tokens[2]?.word).toBe('beta');
     expect(tokens[3]?.word).toBe('alpha');
   });
+
+  it('splits inline em/en dash joins into separate tokens', () => {
+    const segments: Segment[] = [{ id: 'mn19:1.1', text: 'awakening—I calm–mind' }];
+    const tokens = tokenize(segments);
+
+    expect(tokens.map((token) => [token.word, token.trailingPunctuation])).toEqual([
+      ['awakening', '—'],
+      ['I', ''],
+      ['calm', '–'],
+      ['mind', ''],
+    ]);
+  });
 });

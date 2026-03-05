@@ -2,6 +2,7 @@ import { compareSegmentIds } from './uid';
 import type { Segment, Token } from './types';
 
 const PUNCTUATION_PATTERN = /([.,;:!?…—–'"”’)\]}]+)$/u;
+const INLINE_DASH_PATTERN = /([^\s—–])([—–])(?=[^\s])/gu;
 
 const getSectionNumber = (segmentId: string): number | null => {
   const [, suffix = ''] = segmentId.split(':');
@@ -39,7 +40,8 @@ export function tokenize(segments: Segment[]): Token[] {
     }
 
     const section = getSectionNumber(segment.id);
-    const words = text.split(/\s+/u);
+    // Break inline dash joins like "awakening—I" into separate tokens while preserving dash punctuation.
+    const words = text.replace(INLINE_DASH_PATTERN, '$1$2 ').split(/\s+/u);
     words.forEach((rawWord, position) => {
       const { word, trailingPunctuation } = splitWordAndTrailingPunctuation(rawWord);
       const isParagraphStart =
