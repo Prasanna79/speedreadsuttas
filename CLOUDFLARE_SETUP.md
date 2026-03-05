@@ -94,6 +94,38 @@ pnpm --filter @palispeedread/web build
 pnpm exec wrangler pages deploy packages/web/dist --project-name suttaspeed
 ```
 
+## 7. Background full R2 backfill (recommended)
+
+Run full Bilara sync in GitHub Actions without deploying worker immediately:
+
+```bash
+gh workflow run "Sync Bilara to R2" \
+  -R Prasanna79/speedreadsuttas \
+  -f dry_run=false \
+  -f deploy_worker=false
+```
+
+Watch the run:
+
+```bash
+gh run list -R Prasanna79/speedreadsuttas --workflow "Sync Bilara to R2" --limit 1
+gh run watch <run-id> -R Prasanna79/speedreadsuttas --exit-status
+```
+
+Each run uploads an artifact (`bilara-sync-<run-id>`) with:
+- `.cache/r2-sync-summary.json`
+- `packages/worker/src/data/search-index.json`
+- `packages/worker/src/data/translation-manifest.json`
+
+When ready to roll new index/manifest live, rerun with deploy enabled:
+
+```bash
+gh workflow run "Sync Bilara to R2" \
+  -R Prasanna79/speedreadsuttas \
+  -f dry_run=false \
+  -f deploy_worker=true
+```
+
 ## Notes
 
 - Allowed CORS origins are configured in `packages/worker/wrangler.toml`.

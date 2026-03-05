@@ -4,6 +4,17 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Compute sync diff without uploading files'
+        required: true
+        default: false
+        type: boolean
+      deploy_worker:
+        description: 'Deploy worker after sync finishes'
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: bilara-sync
@@ -18,6 +29,8 @@ jobs:
       R2_BUCKET: speedreadsuttas-data
       BILARA_DATA_DIR: ${{ github.workspace }}/bilara-data
       SYNC_STATE_FILE: ${{ github.workspace }}/.cache/r2-sync-manifest.json
+      SYNC_SUMMARY_FILE: ${{ github.workspace }}/.cache/r2-sync-summary.json
+      DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
     steps:
       - name: Checkout app repo
         uses: actions/checkout@v4
@@ -49,8 +62,32 @@ jobs:
       - name: Sync text files to R2
         run: pnpm data:sync-r2
 
+      - name: Summarize sync
+        run: |
+          jq . "$SYNC_SUMMARY_FILE"
+          {
+            echo "## Bilara Sync Summary"
+            echo
+            echo "- Dry run: \`$DRY_RUN\`"
+            echo "- Total files scanned: \`$(jq -r '.total' "$SYNC_SUMMARY_FILE")\`"
+            echo "- Uploaded: \`$(jq -r '.uploaded' "$SYNC_SUMMARY_FILE")\`"
+            echo "- Unchanged: \`$(jq -r '.unchanged' "$SYNC_SUMMARY_FILE")\`"
+            echo "- Removed (not deleted from R2): \`$(jq -r '.removed' "$SYNC_SUMMARY_FILE")\`"
+            echo "- Bucket: \`$(jq -r '.bucket' "$SYNC_SUMMARY_FILE")\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sync artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bilara-sync-${{ github.run_id }}
+          path: |
+            ${{ env.SYNC_SUMMARY_FILE }}
+            packages/worker/src/data/search-index.json
+            packages/worker/src/data/translation-manifest.json
+
       - name: Run tests
         run: pnpm test
 
       - name: Deploy Worker with fresh data
+        if: ${{ !inputs.dry_run && (github.event_name == 'schedule' || inputs.deploy_worker) }}
         run: pnpm --filter @palispeedread/worker run deploy
