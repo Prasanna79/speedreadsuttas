@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: local('OpenDyslexic Regular'), local('OpenDyslexic-Regular');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   --app-bg-top: #f9f3e8;
@@ -43,6 +51,18 @@ body {
   background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: 'Literata', 'EB Garamond', Georgia, serif;
+}
+
+.reader-font-serif {
+  font-family: 'Literata', 'EB Garamond', Georgia, serif;
+}
+
+.reader-font-mono {
+  font-family: 'Iosevka Term', 'JetBrains Mono', 'Fira Code', 'Cascadia Mono', ui-monospace, monospace;
+}
+
+.reader-font-dyslexic {
+  font-family: 'OpenDyslexic', 'Literata', Georgia, serif;
 }
 
 a {

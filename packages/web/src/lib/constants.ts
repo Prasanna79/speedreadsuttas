@@ -12,4 +12,5 @@ export const DEFAULT_PREFERENCES: StoredPreferences = {
   chunkSize: CHUNK_SIZE_DEFAULT,
   theme: 'light',
   fontSize: 'normal',
+  fontFamily: 'serif',
 };

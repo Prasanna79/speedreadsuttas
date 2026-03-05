@@ -16,6 +16,7 @@ describe('RSVPDisplay', () => {
             trailingPunctuation: '',
           },
         ]}
+        fontFamily="serif"
         fontSize="normal"
       />,
     );
@@ -25,7 +26,7 @@ describe('RSVPDisplay', () => {
   });
 
   it('shows empty state when chunk is missing', () => {
-    render(<RSVPDisplay chunk={null} fontSize="large" />);
+    render(<RSVPDisplay chunk={null} fontFamily="serif" fontSize="large" />);
     expect(screen.getByText('No text loaded')).toBeInTheDocument();
   });
 });

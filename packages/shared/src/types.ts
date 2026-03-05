@@ -34,6 +34,7 @@ export interface StoredPreferences {
   chunkSize: number;
   theme: 'light' | 'dark';
   fontSize: 'normal' | 'large' | 'xlarge';
+  fontFamily: 'serif' | 'mono' | 'openDyslexic';
 }
 
 export interface LastRead {

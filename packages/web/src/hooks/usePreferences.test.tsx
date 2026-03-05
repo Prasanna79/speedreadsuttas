@@ -16,6 +16,7 @@ describe('usePreferences', () => {
     expect(result.current[0].wpm).toBe(DEFAULT_PREFERENCES.wpm);
     expect(result.current[0].chunkSize).toBe(DEFAULT_PREFERENCES.chunkSize);
     expect(result.current[0].theme).toBe('dark');
+    expect(result.current[0].fontFamily).toBe(DEFAULT_PREFERENCES.fontFamily);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 

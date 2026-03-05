@@ -28,6 +28,7 @@ function readPreferences(): StoredPreferences {
       chunkSize: parsed.chunkSize ?? DEFAULT_PREFERENCES.chunkSize,
       theme: parsed.theme ?? resolveInitialTheme(),
       fontSize: parsed.fontSize ?? DEFAULT_PREFERENCES.fontSize,
+      fontFamily: parsed.fontFamily ?? DEFAULT_PREFERENCES.fontFamily,
     };
   } catch {
     return { ...DEFAULT_PREFERENCES, theme: resolveInitialTheme() };

@@ -4,9 +4,10 @@ interface SettingsPanelProps {
   preferences: StoredPreferences;
   onThemeToggle: () => void;
   onFontSizeChange: (size: StoredPreferences['fontSize']) => void;
+  onFontFamilyChange: (family: StoredPreferences['fontFamily']) => void;
 }
 
-export function SettingsPanel({ preferences, onThemeToggle, onFontSizeChange }: SettingsPanelProps) {
+export function SettingsPanel({ preferences, onThemeToggle, onFontSizeChange, onFontFamilyChange }: SettingsPanelProps) {
   return (
     <details className="ui-panel rounded p-3">
       <summary className="cursor-pointer text-sm font-semibold">Settings</summary>
@@ -25,6 +26,24 @@ export function SettingsPanel({ preferences, onThemeToggle, onFontSizeChange }: 
               onClick={() => onFontSizeChange(size)}
             >
               {size}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm ui-muted">Font family</span>
+          {([
+            { label: 'Serif', value: 'serif' },
+            { label: 'Mono', value: 'mono' },
+            { label: 'OpenDyslexic', value: 'openDyslexic' },
+          ] as const).map((family) => (
+            <button
+              key={family.value}
+              className={`rounded px-2 py-1 ${preferences.fontFamily === family.value ? 'ui-button-active' : 'ui-button-inactive'}`}
+              type="button"
+              onClick={() => onFontFamilyChange(family.value)}
+            >
+              {family.label}
             </button>
           ))}
         </div>

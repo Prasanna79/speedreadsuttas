@@ -1,4 +1,4 @@
-import { tokenize, type StoredPreferences, WPM_MAX, WPM_MIN } from '@palispeedread/shared';
+import { tokenize, type StoredPreferences, type TranslationOption, WPM_MAX, WPM_MIN } from '@palispeedread/shared';
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { ReaderControls } from '../components/ReaderControls';
 import { ReaderHeader } from '../components/ReaderHeader';
 import { RSVPDisplay } from '../components/RSVPDisplay';
+import { SearchInput } from '../components/SearchInput';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { TranslationChooser } from '../components/TranslationChooser';
 import { useKeyboard } from '../hooks/useKeyboard';
@@ -18,6 +19,7 @@ interface ReaderMeta {
   title: string;
   langName: string;
   authorName: string;
+  translations: TranslationOption[];
 }
 
 export function ReaderPage() {
@@ -50,6 +52,7 @@ export function ReaderPage() {
           title: metaPayload.title,
           langName: currentTranslation?.langName ?? lang,
           authorName: currentTranslation?.authorName ?? author,
+          translations: metaPayload.translations,
         });
         setTokens(tokenize(textPayload.segments));
       })
@@ -122,6 +125,8 @@ function ReaderLoaded({
   setPreferences,
 }: ReaderLoadedProps) {
   const navigate = useNavigate();
+  const translationKey = `${lang}:${author}`;
+  const suttaCentralUrl = `https://suttacentral.net/${uid}/${lang}/${author}`;
 
   const rsvp = useRSVP(tokens, preferences.wpm, preferences.chunkSize);
   const { resumePosition, clearResume } = useLastRead({
@@ -163,7 +168,52 @@ function ReaderLoaded({
         langName={meta?.langName ?? lang}
         title={meta?.title ?? uid}
         uid={uid}
+        actions={
+          <>
+            <button className="ui-button rounded px-3 py-1 text-sm" type="button" onClick={() => navigate('/')}>
+              Back to Search
+            </button>
+            <a
+              className="ui-link text-sm"
+              href={suttaCentralUrl}
+              rel="noreferrer noopener"
+              target="_blank"
+            >
+              Open on SuttaCentral
+            </a>
+            {meta?.translations.length ? (
+              <label className="flex items-center gap-2 text-sm">
+                <span className="ui-muted">Translation</span>
+                <select
+                  aria-label="Switch translation"
+                  className="ui-input rounded px-2 py-1"
+                  value={translationKey}
+                  onChange={(event) => {
+                    const [nextLang, nextAuthor] = event.target.value.split(':');
+                    if (!nextLang || !nextAuthor || (nextLang === lang && nextAuthor === author)) {
+                      return;
+                    }
+                    navigate(`/read/${uid}/${nextLang}/${nextAuthor}`);
+                  }}
+                >
+                  {meta.translations.map((option) => {
+                    const optionKey = `${option.lang}:${option.author}`;
+                    return (
+                      <option key={optionKey} value={optionKey}>
+                        {`${option.langName} — ${option.authorName}`}
+                      </option>
+                    );
+                  })}
+                </select>
+              </label>
+            ) : null}
+          </>
+        }
       />
+
+      <section className="ui-panel-soft rounded p-3">
+        <SearchInput onSelectUid={(nextUid) => navigate(`/read/${nextUid}`)} />
+      </section>
 
       {resumePosition !== null ? (
         <section className="ui-panel-soft rounded p-3 text-sm">
@@ -182,7 +232,7 @@ function ReaderLoaded({
         </section>
       ) : null}
 
-      <RSVPDisplay chunk={rsvp.currentChunk} fontSize={preferences.fontSize} />
+      <RSVPDisplay chunk={rsvp.currentChunk} fontFamily={preferences.fontFamily} fontSize={preferences.fontSize} />
       <ProgressBar
         progress={rsvp.progress}
         timeRemainingMs={rsvp.timeRemainingMs}
@@ -206,6 +256,7 @@ function ReaderLoaded({
           setPreferences((state) => ({ ...state, theme: state.theme === 'dark' ? 'light' : 'dark' }))
         }
         onFontSizeChange={(size) => setPreferences((state) => ({ ...state, fontSize: size }))}
+        onFontFamilyChange={(family) => setPreferences((state) => ({ ...state, fontFamily: family }))}
       />
     </main>
   );

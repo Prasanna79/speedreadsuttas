@@ -4,12 +4,19 @@ import type { ReactNode } from 'react';
 interface RSVPDisplayProps {
   chunk: Token[] | null;
   fontSize: 'normal' | 'large' | 'xlarge';
+  fontFamily: 'serif' | 'mono' | 'openDyslexic';
 }
 
 const fontSizeClassMap = {
   normal: 'text-4xl',
   large: 'text-5xl',
   xlarge: 'text-6xl',
+};
+
+const fontFamilyClassMap = {
+  serif: 'reader-font-serif',
+  mono: 'reader-font-mono',
+  openDyslexic: 'reader-font-dyslexic',
 };
 
 function renderWord(token: Token): ReactNode {
@@ -31,7 +38,7 @@ function renderWord(token: Token): ReactNode {
   );
 }
 
-export function RSVPDisplay({ chunk, fontSize }: RSVPDisplayProps) {
+export function RSVPDisplay({ chunk, fontSize, fontFamily }: RSVPDisplayProps) {
   if (!chunk || chunk.length === 0) {
     return <section className="ui-panel rounded p-8 text-center ui-muted">No text loaded</section>;
   }
@@ -41,7 +48,9 @@ export function RSVPDisplay({ chunk, fontSize }: RSVPDisplayProps) {
       aria-live="polite"
       className="ui-panel relative flex min-h-56 items-center justify-center rounded px-6 py-10 text-center"
     >
-      <div className={`font-serif leading-tight [font-variant-numeric:lining-nums_tabular-nums] ${fontSizeClassMap[fontSize]}`}>
+      <div
+        className={`${fontFamilyClassMap[fontFamily]} leading-tight [font-variant-numeric:lining-nums_tabular-nums] ${fontSizeClassMap[fontSize]}`}
+      >
         {chunk.map((token, index) => (
           <span key={`${token.segmentId}:${token.index}`}>
             {renderWord(token)}
