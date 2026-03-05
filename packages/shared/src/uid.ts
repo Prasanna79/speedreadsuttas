@@ -139,10 +139,17 @@ export function buildAnRangeCandidates(uid: string): string[] {
 
 const parseSegmentPart = (segmentId: string): number[] => {
   const suffix = segmentId.includes(':') ? segmentId.split(':').slice(1).join(':') : segmentId;
-  return suffix
-    .split('.')
-    .map((part) => Number(part))
-    .map((value) => (Number.isNaN(value) ? 0 : value));
+  const values: number[] = [];
+
+  for (const part of suffix.split('.')) {
+    const rangeParts = part.split('-');
+    for (const rangePart of rangeParts) {
+      const parsed = Number(rangePart);
+      values.push(Number.isNaN(parsed) ? 0 : parsed);
+    }
+  }
+
+  return values;
 };
 
 export function compareSegmentIds(a: string, b: string): number {

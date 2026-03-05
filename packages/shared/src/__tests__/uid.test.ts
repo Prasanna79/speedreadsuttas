@@ -98,4 +98,15 @@ describe('compareSegmentIds', () => {
     expect(compareSegmentIds('mn1:1', 'mn1:1.1')).toBeLessThan(0);
     expect(compareSegmentIds('mn1:1.1', 'mn1:1')).toBeGreaterThan(0);
   });
+
+  it('sorts hyphen-range segment ids in natural numeric order', () => {
+    const ids = ['mn19:4-5.1', 'mn19:0.2', 'mn19:9-10.1', 'mn19:1.1', 'mn19:4-5.2'];
+    expect(ids.sort(compareSegmentIds)).toEqual([
+      'mn19:0.2',
+      'mn19:1.1',
+      'mn19:4-5.1',
+      'mn19:4-5.2',
+      'mn19:9-10.1',
+    ]);
+  });
 });
