@@ -45,7 +45,7 @@ jobs:
         run: pnpm --filter @palispeedread/worker run deploy
 
       - name: Deploy Pages
-        run: pnpm --filter @palispeedread/worker exec wrangler pages deploy packages/web/dist --project-name suttaspeed
+        run: pnpm --filter @palispeedread/worker exec wrangler pages deploy ../../packages/web/dist --project-name suttaspeed
 
   e2e:
     needs: deploy
