@@ -294,7 +294,7 @@ function ReaderLoaded({
                 type="button"
                 onClick={() => setPreferences((state) => ({ ...state, focusMode: true }))}
               >
-                <span aria-hidden="true">◉</span>
+                <span aria-hidden="true">⤢</span>
               </button>
             }
             suttaCentralUrl={suttaCentralUrl}
@@ -311,7 +311,7 @@ function ReaderLoaded({
                     if (!previousUid) {
                       return;
                     }
-                    navigate(`/read/${previousUid}`);
+                    navigate(`/read/${previousUid}/${lang}/${author}`);
                   }}
                 >
                   ← Prev
@@ -325,17 +325,25 @@ function ReaderLoaded({
                     if (!nextUid) {
                       return;
                     }
-                    navigate(`/read/${nextUid}`);
+                    navigate(`/read/${nextUid}/${lang}/${author}`);
                   }}
                 >
                   Next →
                 </button>
                 <button
-                  className="ui-button rounded px-3 py-1 text-sm"
+                  className="ui-button hidden rounded px-3 py-1 text-sm sm:inline-flex"
                   type="button"
                   onClick={() => navigate('/')}
                 >
                   Back to Search
+                </button>
+                <button
+                  aria-label="Open search"
+                  className="ui-button rounded px-2 py-1 sm:hidden"
+                  type="button"
+                  onClick={() => navigate('/')}
+                >
+                  <span aria-hidden="true">🔍</span>
                 </button>
                 {meta?.translations.length ? (
                   <label className="flex items-center gap-2 text-sm">
@@ -373,7 +381,7 @@ function ReaderLoaded({
         )}
 
         {isFocusMode ? null : (
-          <section className="ui-panel-soft rounded p-3">
+          <section className="ui-panel-soft hidden rounded p-3 md:block">
             <SearchInput onSelectUid={(nextUid) => navigate(`/read/${nextUid}`)} />
           </section>
         )}
