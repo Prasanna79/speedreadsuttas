@@ -146,6 +146,36 @@ async function wranglerUploader(bucket: string, key: string, filePath: string): 
   ]);
 }
 
+const RETRYABLE_UPLOAD_PATTERN = /(502|503|504|bad gateway|failed to fetch|etimedout|econnreset)/i;
+
+const sleep = async (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+async function uploadWithRetry(
+  uploader: (bucket: string, key: string, filePath: string) => Promise<void>,
+  bucket: string,
+  key: string,
+  filePath: string,
+): Promise<void> {
+  const maxAttempts = 6;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await uploader(bucket, key, filePath);
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const shouldRetry = RETRYABLE_UPLOAD_PATTERN.test(message) && attempt < maxAttempts;
+      if (!shouldRetry) {
+        throw error;
+      }
+      await sleep(500 * attempt);
+    }
+  }
+}
+
 export async function syncBilaraToR2(options: SyncOptions): Promise<{
   total: number;
   uploaded: number;
@@ -161,7 +191,7 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
 
   if (!dryRun) {
     for (const entry of diff.toUpload) {
-      await uploader(bucket, entry.key, entry.filePath);
+      await uploadWithRetry(uploader, bucket, entry.key, entry.filePath);
     }
   }
 
