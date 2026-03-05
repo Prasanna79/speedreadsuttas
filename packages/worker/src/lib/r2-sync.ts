@@ -29,12 +29,33 @@ export interface SyncOptions {
   stateFilePath: string;
   dryRun?: boolean;
   uploader?: (bucket: string, key: string, filePath: string) => Promise<void>;
+  onProgress?: (event: SyncProgressEvent) => void;
+  uploadConcurrency?: number;
+}
+
+type Nikaya = 'dn' | 'mn' | 'sn' | 'an' | 'kn' | 'other';
+
+export interface SyncProgressEvent {
+  type: 'plan' | 'group-start' | 'file' | 'group-complete' | 'complete';
+  total: number;
+  toUpload: number;
+  unchanged: number;
+  removed: number;
+  uploaded: number;
+  dryRun: boolean;
+  group?: Nikaya;
+  groupIndex?: number;
+  groupTotal?: number;
+  groupUploaded?: number;
+  key?: string;
 }
 
 const TEXT_ROOTS = [
   path.join('root', 'pli', 'ms', 'sutta'),
   'translation',
 ];
+
+const NIKAYA_ORDER: Nikaya[] = ['dn', 'mn', 'sn', 'an', 'kn', 'other'];
 
 const toPosixPath = (value: string): string => value.split(path.sep).join('/');
 
@@ -130,6 +151,36 @@ export function diffSyncManifest(previous: SyncManifest, current: FileHashEntry[
   };
 }
 
+function toNikaya(key: string): Nikaya {
+  const marker = '/sutta/';
+  const markerIndex = key.indexOf(marker);
+  if (markerIndex === -1) {
+    return 'other';
+  }
+
+  const collection = key.slice(markerIndex + marker.length).split('/')[0];
+  switch (collection) {
+    case 'dn':
+    case 'mn':
+    case 'sn':
+    case 'an':
+    case 'kn':
+      return collection;
+    default:
+      return 'other';
+  }
+}
+
+function byNikayaThenKey(left: FileHashEntry, right: FileHashEntry): number {
+  const leftNikaya = toNikaya(left.key);
+  const rightNikaya = toNikaya(right.key);
+  const rankDiff = NIKAYA_ORDER.indexOf(leftNikaya) - NIKAYA_ORDER.indexOf(rightNikaya);
+  if (rankDiff !== 0) {
+    return rankDiff;
+  }
+  return left.key.localeCompare(right.key);
+}
+
 async function wranglerUploader(bucket: string, key: string, filePath: string): Promise<void> {
   await execFileAsync('pnpm', [
     '--filter',
@@ -176,6 +227,32 @@ async function uploadWithRetry(
   }
 }
 
+async function uploadEntriesWithConcurrency(
+  entries: FileHashEntry[],
+  uploadConcurrency: number,
+  uploader: (entry: FileHashEntry) => Promise<void>,
+): Promise<void> {
+  if (entries.length === 0) {
+    return;
+  }
+
+  let cursor = 0;
+  const workerCount = Math.min(entries.length, uploadConcurrency);
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const currentIndex = cursor;
+      if (currentIndex >= entries.length) {
+        return;
+      }
+      cursor += 1;
+      await uploader(entries[currentIndex]);
+    }
+  });
+
+  await Promise.all(workers);
+}
+
 export async function syncBilaraToR2(options: SyncOptions): Promise<{
   total: number;
   uploaded: number;
@@ -188,18 +265,106 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
   const currentFiles = await collectBilaraTextFiles(bilaraDataDir);
   const previousManifest = await loadSyncManifest(stateFilePath);
   const diff = diffSyncManifest(previousManifest, currentFiles);
+  const sortedUploads = [...diff.toUpload].sort(byNikayaThenKey);
+  const total = currentFiles.length;
+  const toUpload = sortedUploads.length;
+  const onProgress = options.onProgress;
+  const uploadConcurrency = Math.max(1, options.uploadConcurrency ?? 1);
+
+  onProgress?.({
+    type: 'plan',
+    total,
+    toUpload,
+    unchanged: diff.unchanged,
+    removed: diff.removed.length,
+    uploaded: 0,
+    dryRun,
+  });
 
   if (!dryRun) {
-    for (const entry of diff.toUpload) {
-      await uploadWithRetry(uploader, bucket, entry.key, entry.filePath);
+    let uploaded = 0;
+    let groupIndex = 0;
+    let currentGroup: Nikaya | null = null;
+    let groupTotal = 0;
+    let groupUploaded = 0;
+
+    const groupedUploads = NIKAYA_ORDER.map((nikaya) => ({
+      nikaya,
+      entries: sortedUploads.filter((entry) => toNikaya(entry.key) === nikaya),
+    })).filter((group) => group.entries.length > 0);
+
+    for (const group of groupedUploads) {
+      groupIndex += 1;
+      currentGroup = group.nikaya;
+      groupTotal = group.entries.length;
+      groupUploaded = 0;
+
+      onProgress?.({
+        type: 'group-start',
+        total,
+        toUpload,
+        unchanged: diff.unchanged,
+        removed: diff.removed.length,
+        uploaded,
+        dryRun,
+        group: currentGroup,
+        groupIndex,
+        groupTotal,
+        groupUploaded,
+      });
+
+      await uploadEntriesWithConcurrency(group.entries, uploadConcurrency, async (entry) => {
+        await uploadWithRetry(uploader, bucket, entry.key, entry.filePath);
+        uploaded += 1;
+        groupUploaded += 1;
+
+        onProgress?.({
+          type: 'file',
+          total,
+          toUpload,
+          unchanged: diff.unchanged,
+          removed: diff.removed.length,
+          uploaded,
+          dryRun,
+          group: currentGroup ?? group.nikaya,
+          groupIndex,
+          groupTotal,
+          groupUploaded,
+          key: entry.key,
+        });
+      });
+
+      onProgress?.({
+        type: 'group-complete',
+        total,
+        toUpload,
+        unchanged: diff.unchanged,
+        removed: diff.removed.length,
+        uploaded,
+        dryRun,
+        group: currentGroup,
+        groupIndex,
+        groupTotal,
+        groupUploaded,
+      });
     }
   }
 
   await writeSyncManifest(stateFilePath, currentFiles);
 
+  onProgress?.({
+    type: 'complete',
+    total,
+    toUpload,
+    unchanged: diff.unchanged,
+    removed: diff.removed.length,
+    uploaded: dryRun ? 0 : toUpload,
+    dryRun,
+  });
+
   return {
-    total: currentFiles.length,
-    uploaded: diff.toUpload.length,
+    total,
+    uploaded: toUpload,
     unchanged: diff.unchanged,
     removed: diff.removed.length,
   };
