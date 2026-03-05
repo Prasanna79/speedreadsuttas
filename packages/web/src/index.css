@@ -2,7 +2,10 @@
 
 @font-face {
   font-family: 'OpenDyslexic';
-  src: local('OpenDyslexic Regular'), local('OpenDyslexic-Regular');
+  src:
+    url('./assets/fonts/opendyslexic-latin-400-normal.woff2') format('woff2'),
+    local('OpenDyslexic Regular'),
+    local('OpenDyslexic-Regular');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
