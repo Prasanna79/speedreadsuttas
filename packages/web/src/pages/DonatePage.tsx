@@ -12,7 +12,7 @@ export function DonatePage() {
       <section className="ui-panel rounded p-5">
         <a
           className="ui-button-accent inline-block rounded px-4 py-2"
-          href="https://suttacentral.net/donate?lang=en"
+          href="https://suttacentral.net/donations?lang=en"
           rel="noreferrer noopener"
           target="_blank"
         >
