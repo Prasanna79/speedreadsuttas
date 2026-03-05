@@ -132,6 +132,8 @@ export function diffSyncManifest(previous: SyncManifest, current: FileHashEntry[
 
 async function wranglerUploader(bucket: string, key: string, filePath: string): Promise<void> {
   await execFileAsync('pnpm', [
+    '--filter',
+    '@palispeedread/worker',
     'exec',
     'wrangler',
     'r2',
