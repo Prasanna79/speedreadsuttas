@@ -34,6 +34,7 @@ describe('ReaderControls', () => {
   });
 
   it('renders compact dock mode without advanced controls', () => {
+    const onWpmChange = vi.fn();
     render(
       <ReaderControls
         chunkSize={2}
@@ -45,12 +46,17 @@ describe('ReaderControls', () => {
         onSkipBackward={vi.fn()}
         onSkipForward={vi.fn()}
         onTogglePlay={vi.fn()}
-        onWpmChange={vi.fn()}
+        onWpmChange={onWpmChange}
       />,
     );
 
     expect(screen.getByRole('button', { name: 'Play or pause' })).toHaveTextContent('Pause');
     expect(screen.queryByLabelText('WPM slider')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Chunk 1' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Increase speed' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease speed' }));
+    expect(onWpmChange).toHaveBeenNthCalledWith(1, 275);
+    expect(onWpmChange).toHaveBeenNthCalledWith(2, 225);
   });
 });

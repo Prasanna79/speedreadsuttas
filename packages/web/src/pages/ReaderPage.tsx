@@ -204,6 +204,7 @@ function ReaderLoaded({
           <ReaderHeader
             authorName={meta?.authorName ?? author}
             langName={meta?.langName ?? lang}
+            suttaCentralUrl={suttaCentralUrl}
             title={meta?.title ?? uid}
             uid={uid}
             actions={
@@ -215,14 +216,6 @@ function ReaderLoaded({
                 >
                   Back to Search
                 </button>
-                <a
-                  className="ui-link text-sm"
-                  href={suttaCentralUrl}
-                  rel="noreferrer noopener"
-                  target="_blank"
-                >
-                  Open on SuttaCentral
-                </a>
                 {meta?.translations.length ? (
                   <label className="flex items-center gap-2 text-sm">
                     <span className="ui-muted">Translation</span>
@@ -256,6 +249,19 @@ function ReaderLoaded({
               </>
             }
           />
+        )}
+
+        {isFocusMode ? null : (
+          <section className="flex justify-end">
+            <button
+              aria-label="Enter focus mode"
+              className="ui-button-accent rounded px-3 py-2 text-sm"
+              type="button"
+              onClick={() => setPreferences((state) => ({ ...state, focusMode: true }))}
+            >
+              Focus mode
+            </button>
+          </section>
         )}
 
         {isFocusMode ? null : (

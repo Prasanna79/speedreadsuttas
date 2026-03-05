@@ -30,8 +30,9 @@ test('reader route loads play controls for mn1', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Play or pause' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Restart' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Back to Search' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open on SuttaCentral' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Full sutta' })).toBeVisible();
   await expect(page.getByLabel('Switch translation')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Enter focus mode' })).toBeVisible();
 });
 
 test('theme toggle persists on reader page', async ({ page }) => {
@@ -94,8 +95,7 @@ test('focus mode hides global chrome and can be exited', async ({ page }) => {
   await page.goto('/read/mn1/en/sujato');
   await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
 
-  await page.getByText('Settings').click();
-  await page.getByRole('button', { name: 'Toggle focus mode' }).click();
+  await page.getByRole('button', { name: 'Enter focus mode' }).click();
 
   await expect(page.getByRole('button', { name: 'Exit focus mode' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play or pause' })).toBeVisible();

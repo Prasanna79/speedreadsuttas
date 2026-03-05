@@ -66,7 +66,28 @@ export function ReaderControls({
         </button>
       </div>
 
-      {compact ? null : (
+      {compact ? (
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-sm ui-muted">Speed</span>
+          <button
+            aria-label="Decrease speed"
+            className="ui-button rounded px-2 py-1"
+            type="button"
+            onClick={() => onWpmChange(Math.max(100, wpm - 25))}
+          >
+            −
+          </button>
+          <span className="min-w-14 text-center text-sm font-medium">{`${wpm} WPM`}</span>
+          <button
+            aria-label="Increase speed"
+            className="ui-button rounded px-2 py-1"
+            type="button"
+            onClick={() => onWpmChange(Math.min(800, wpm + 25))}
+          >
+            +
+          </button>
+        </div>
+      ) : (
         <>
           <label className="text-sm font-medium ui-muted" htmlFor="wpm-slider">
             WPM: {wpm}
