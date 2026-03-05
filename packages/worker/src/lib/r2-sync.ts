@@ -138,6 +138,7 @@ async function wranglerUploader(bucket: string, key: string, filePath: string): 
     'object',
     'put',
     `${bucket}/${key}`,
+    '--remote',
     '--file',
     filePath,
   ]);

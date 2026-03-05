@@ -75,6 +75,12 @@ Example file is provided at `packages/web/.env.production.example`.
 
 ## 6. Deploy
 
+Seed one guaranteed playtest sutta in R2:
+
+```bash
+pnpm data:seed-playtest
+```
+
 Worker:
 
 ```bash

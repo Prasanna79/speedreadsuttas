@@ -41,8 +41,23 @@ jobs:
           pnpm test
           pnpm build
 
+      - name: Seed playtest sutta in R2
+        run: pnpm data:seed-playtest
+
       - name: Deploy Worker
         run: pnpm --filter @palispeedread/worker run deploy
+
+      - name: Verify playtest sutta API
+        run: |
+          for i in {1..20}; do
+            payload="$(curl -fsS https://api.suttaspeed.com/api/v1/sutta/mn1/text/en/sujato || true)"
+            if echo "$payload" | jq -e '.segments | length > 0' > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Playtest sutta mn1/en/sujato is unavailable from API"
+          exit 1
 
       - name: Deploy Pages
         run: pnpm --filter @palispeedread/worker exec wrangler pages deploy ../../packages/web/dist --project-name suttaspeed

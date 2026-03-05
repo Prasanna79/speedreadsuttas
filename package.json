@@ -10,6 +10,7 @@
     "dev:worker": "pnpm --filter @palispeedread/worker dev",
     "data:build-index": "tsx scripts/build-search-index.ts",
     "data:sync-r2": "tsx scripts/sync-bilara-to-r2.ts",
+    "data:seed-playtest": "tsx scripts/seed-playtest-sutta-to-r2.ts",
     "e2e": "playwright test",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
