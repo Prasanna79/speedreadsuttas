@@ -17,6 +17,7 @@ describe('usePreferences', () => {
     expect(result.current[0].chunkSize).toBe(DEFAULT_PREFERENCES.chunkSize);
     expect(result.current[0].theme).toBe('dark');
     expect(result.current[0].fontFamily).toBe(DEFAULT_PREFERENCES.fontFamily);
+    expect(result.current[0].focusMode).toBe(DEFAULT_PREFERENCES.focusMode);
     expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
@@ -30,15 +31,17 @@ describe('usePreferences', () => {
     const { result } = renderHook(() => usePreferences());
 
     act(() => {
-      result.current[1]((previous) => ({ ...previous, wpm: 350, theme: 'light' }));
+      result.current[1]((previous) => ({ ...previous, wpm: 350, theme: 'light', focusMode: true }));
     });
 
     const stored = JSON.parse(window.localStorage.getItem(PREFERENCES_KEY) ?? '{}') as {
       wpm: number;
       theme: string;
+      focusMode: boolean;
     };
     expect(stored.wpm).toBe(350);
     expect(stored.theme).toBe('light');
+    expect(stored.focusMode).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
   });
 });

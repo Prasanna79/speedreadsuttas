@@ -10,6 +10,7 @@ export interface KeyboardHandlers {
   setChunkSize?: (size: number) => void;
   toggleTheme?: () => void;
   goHome?: () => void;
+  exitFocusMode?: () => void;
 }
 
 function shouldIgnoreEvent(target: EventTarget | null): boolean {
@@ -71,6 +72,10 @@ export function useKeyboard(handlers: KeyboardHandlers): void {
           break;
         }
         case 'Escape': {
+          if (handlers.exitFocusMode) {
+            handlers.exitFocusMode();
+            break;
+          }
           handlers.goHome?.();
           break;
         }

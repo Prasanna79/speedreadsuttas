@@ -5,14 +5,35 @@ interface SettingsPanelProps {
   onThemeToggle: () => void;
   onFontSizeChange: (size: StoredPreferences['fontSize']) => void;
   onFontFamilyChange: (family: StoredPreferences['fontFamily']) => void;
+  onFocusModeToggle: () => void;
 }
 
-export function SettingsPanel({ preferences, onThemeToggle, onFontSizeChange, onFontFamilyChange }: SettingsPanelProps) {
+export function SettingsPanel({
+  preferences,
+  onThemeToggle,
+  onFontSizeChange,
+  onFontFamilyChange,
+  onFocusModeToggle,
+}: SettingsPanelProps) {
   return (
     <details className="ui-panel rounded p-3">
       <summary className="cursor-pointer text-sm font-semibold">Settings</summary>
       <div className="mt-3 grid gap-3">
-        <button aria-label="Toggle dark mode" className="ui-button rounded px-3 py-2" type="button" onClick={onThemeToggle}>
+        <button
+          aria-label="Toggle focus mode"
+          className="ui-button rounded px-3 py-2"
+          type="button"
+          onClick={onFocusModeToggle}
+        >
+          Focus mode: {preferences.focusMode ? 'on' : 'off'}
+        </button>
+
+        <button
+          aria-label="Toggle dark mode"
+          className="ui-button rounded px-3 py-2"
+          type="button"
+          onClick={onThemeToggle}
+        >
           Theme: {preferences.theme}
         </button>
 
@@ -32,11 +53,13 @@ export function SettingsPanel({ preferences, onThemeToggle, onFontSizeChange, on
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm ui-muted">Font family</span>
-          {([
-            { label: 'Serif', value: 'serif' },
-            { label: 'Mono', value: 'mono' },
-            { label: 'OpenDyslexic', value: 'openDyslexic' },
-          ] as const).map((family) => (
+          {(
+            [
+              { label: 'Serif', value: 'serif' },
+              { label: 'Mono', value: 'mono' },
+              { label: 'OpenDyslexic', value: 'openDyslexic' },
+            ] as const
+          ).map((family) => (
             <button
               key={family.value}
               className={`rounded px-2 py-1 ${preferences.fontFamily === family.value ? 'ui-button-active' : 'ui-button-inactive'}`}

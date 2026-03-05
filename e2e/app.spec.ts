@@ -56,6 +56,56 @@ test('theme toggle persists on reader page', async ({ page }) => {
     .toBe(!isDarkBefore);
 });
 
+test('mobile xlarge keeps playback controls inside viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 2,
+        theme: 'light',
+        fontSize: 'xlarge',
+        fontFamily: 'serif',
+        focusMode: false,
+      }),
+    );
+  });
+
+  await page.goto('/read/mn1/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
+
+  const playPause = page.getByRole('button', { name: 'Play or pause' });
+  await expect(playPause).toBeVisible();
+  const box = await playPause.boundingBox();
+  const viewport = page.viewportSize();
+
+  expect(box).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  if (!box || !viewport) {
+    return;
+  }
+
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+});
+
+test('focus mode hides global chrome and can be exited', async ({ page }) => {
+  await page.goto('/read/mn1/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
+
+  await page.getByText('Settings').click();
+  await page.getByRole('button', { name: 'Toggle focus mode' }).click();
+
+  await expect(page.getByRole('button', { name: 'Exit focus mode' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'About' })).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Donate' })).toBeHidden();
+
+  await page.getByRole('button', { name: 'Exit focus mode' }).click();
+  await expect(page.getByRole('link', { name: 'About' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Donate' })).toBeVisible();
+});
+
 test('resume banner remains visible on mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 });
   await page.addInitScript(() => {
@@ -91,6 +141,7 @@ test('reader tokenization splits em-dash joins and preserves segment order', asy
         theme: 'light',
         fontSize: 'normal',
         fontFamily: 'serif',
+        focusMode: false,
       }),
     );
   });

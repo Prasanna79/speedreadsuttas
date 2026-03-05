@@ -35,6 +35,7 @@ export interface StoredPreferences {
   theme: 'light' | 'dark';
   fontSize: 'normal' | 'large' | 'xlarge';
   fontFamily: 'serif' | 'mono' | 'openDyslexic';
+  focusMode: boolean;
 }
 
 export interface LastRead {

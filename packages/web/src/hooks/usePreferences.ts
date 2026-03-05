@@ -29,6 +29,7 @@ function readPreferences(): StoredPreferences {
       theme: parsed.theme ?? resolveInitialTheme(),
       fontSize: parsed.fontSize ?? DEFAULT_PREFERENCES.fontSize,
       fontFamily: parsed.fontFamily ?? DEFAULT_PREFERENCES.fontFamily,
+      focusMode: parsed.focusMode ?? DEFAULT_PREFERENCES.focusMode,
     };
   } catch {
     return { ...DEFAULT_PREFERENCES, theme: resolveInitialTheme() };

@@ -14,14 +14,7 @@ describe('ReaderControls', () => {
       onRestart: vi.fn(),
     };
 
-    render(
-      <ReaderControls
-        chunkSize={2}
-        isPlaying={false}
-        wpm={250}
-        {...handlers}
-      />,
-    );
+    render(<ReaderControls chunkSize={2} isPlaying={false} wpm={250} {...handlers} />);
 
     expect(screen.getByRole('button', { name: 'Play or pause' })).toHaveTextContent('Play');
 
@@ -38,5 +31,26 @@ describe('ReaderControls', () => {
     expect(handlers.onRestart).toHaveBeenCalled();
     expect(handlers.onChunkSizeChange).toHaveBeenCalledWith(4);
     expect(handlers.onWpmChange).toHaveBeenCalledWith(300);
+  });
+
+  it('renders compact dock mode without advanced controls', () => {
+    render(
+      <ReaderControls
+        chunkSize={2}
+        compact
+        isPlaying
+        wpm={250}
+        onChunkSizeChange={vi.fn()}
+        onRestart={vi.fn()}
+        onSkipBackward={vi.fn()}
+        onSkipForward={vi.fn()}
+        onTogglePlay={vi.fn()}
+        onWpmChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Play or pause' })).toHaveTextContent('Pause');
+    expect(screen.queryByLabelText('WPM slider')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Chunk 1' })).not.toBeInTheDocument();
   });
 });

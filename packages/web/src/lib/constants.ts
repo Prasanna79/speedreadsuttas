@@ -1,8 +1,4 @@
-import {
-  CHUNK_SIZE_DEFAULT,
-  WPM_DEFAULT,
-  type StoredPreferences,
-} from '@palispeedread/shared';
+import { CHUNK_SIZE_DEFAULT, WPM_DEFAULT, type StoredPreferences } from '@palispeedread/shared';
 
 export const PREFERENCES_KEY = 'palispeedread:preferences';
 export const LAST_READ_KEY = 'palispeedread:last-read';
@@ -13,4 +9,5 @@ export const DEFAULT_PREFERENCES: StoredPreferences = {
   theme: 'light',
   fontSize: 'normal',
   fontFamily: 'serif',
+  focusMode: false,
 };

@@ -1,4 +1,10 @@
-import { tokenize, type StoredPreferences, type TranslationOption, WPM_MAX, WPM_MIN } from '@palispeedread/shared';
+import {
+  tokenize,
+  type StoredPreferences,
+  type TranslationOption,
+  WPM_MAX,
+  WPM_MIN,
+} from '@palispeedread/shared';
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -45,8 +51,9 @@ export function ReaderPage() {
     Promise.all([fetchSuttaText(normalizedUid, lang, author), fetchSuttaMeta(normalizedUid)])
       .then(([textPayload, metaPayload]) => {
         const currentTranslation =
-          metaPayload.translations.find((option) => option.lang === lang && option.author === author) ??
-          metaPayload.translations[0];
+          metaPayload.translations.find(
+            (option) => option.lang === lang && option.author === author,
+          ) ?? metaPayload.translations[0];
 
         setMeta({
           title: metaPayload.title,
@@ -127,6 +134,7 @@ function ReaderLoaded({
   const navigate = useNavigate();
   const translationKey = `${lang}:${author}`;
   const suttaCentralUrl = `https://suttacentral.net/${uid}/${lang}/${author}`;
+  const isFocusMode = preferences.focusMode;
 
   const rsvp = useRSVP(tokens, preferences.wpm, preferences.chunkSize);
   const { resumePosition, clearResume } = useLastRead({
@@ -158,106 +166,185 @@ function ReaderLoaded({
         ...value,
         theme: value.theme === 'dark' ? 'light' : 'dark',
       })),
-    goHome: () => navigate('/'),
+    goHome: isFocusMode ? undefined : () => navigate('/'),
+    exitFocusMode: isFocusMode
+      ? () =>
+          setPreferences((value) => ({
+            ...value,
+            focusMode: false,
+          }))
+      : undefined,
   });
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('reader-focus-mode', isFocusMode);
+    return () => {
+      document.documentElement.classList.remove('reader-focus-mode');
+    };
+  }, [isFocusMode]);
+
   return (
-    <main className="mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-6 py-8">
-      <ReaderHeader
-        authorName={meta?.authorName ?? author}
-        langName={meta?.langName ?? lang}
-        title={meta?.title ?? uid}
-        uid={uid}
-        actions={
-          <>
-            <button className="ui-button rounded px-3 py-1 text-sm" type="button" onClick={() => navigate('/')}>
-              Back to Search
-            </button>
-            <a
-              className="ui-link text-sm"
-              href={suttaCentralUrl}
-              rel="noreferrer noopener"
-              target="_blank"
-            >
-              Open on SuttaCentral
-            </a>
-            {meta?.translations.length ? (
-              <label className="flex items-center gap-2 text-sm">
-                <span className="ui-muted">Translation</span>
-                <select
-                  aria-label="Switch translation"
-                  className="ui-input rounded px-2 py-1"
-                  value={translationKey}
-                  onChange={(event) => {
-                    const [nextLang, nextAuthor] = event.target.value.split(':');
-                    if (!nextLang || !nextAuthor || (nextLang === lang && nextAuthor === author)) {
-                      return;
-                    }
-                    navigate(`/read/${uid}/${nextLang}/${nextAuthor}`);
-                  }}
-                >
-                  {meta.translations.map((option) => {
-                    const optionKey = `${option.lang}:${option.author}`;
-                    return (
-                      <option key={optionKey} value={optionKey}>
-                        {`${option.langName} — ${option.authorName}`}
-                      </option>
-                    );
-                  })}
-                </select>
-              </label>
-            ) : null}
-          </>
-        }
-      />
-
-      <section className="ui-panel-soft rounded p-3">
-        <SearchInput onSelectUid={(nextUid) => navigate(`/read/${nextUid}`)} />
-      </section>
-
-      {resumePosition !== null ? (
-        <section className="ui-panel-soft rounded p-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="min-w-0 flex-1">Resume where you left off?</span>
-            <button className="ui-button rounded px-2 py-1" type="button" onClick={() => {
-              rsvp.seekTo(resumePosition);
-              clearResume();
-            }}>
-              Resume
-            </button>
-            <button className="ui-button rounded px-2 py-1" type="button" onClick={clearResume}>
-              Start over
-            </button>
-          </div>
-        </section>
+    <>
+      {isFocusMode ? (
+        <button
+          aria-label="Exit focus mode"
+          className="ui-button fixed top-4 right-4 z-40 rounded px-3 py-2 text-sm"
+          type="button"
+          onClick={() => setPreferences((state) => ({ ...state, focusMode: false }))}
+        >
+          Exit focus
+        </button>
       ) : null}
 
-      <RSVPDisplay chunk={rsvp.currentChunk} fontFamily={preferences.fontFamily} fontSize={preferences.fontSize} />
-      <ProgressBar
-        progress={rsvp.progress}
-        timeRemainingMs={rsvp.timeRemainingMs}
-        totalChunks={rsvp.totalChunks}
-        onSeek={rsvp.seekTo}
-      />
-      <ReaderControls
-        chunkSize={preferences.chunkSize}
-        isPlaying={rsvp.isPlaying}
-        wpm={preferences.wpm}
-        onChunkSizeChange={(value) => setPreferences((state) => ({ ...state, chunkSize: value }))}
-        onRestart={rsvp.restart}
-        onSkipBackward={rsvp.skipBackward}
-        onSkipForward={rsvp.skipForward}
-        onTogglePlay={rsvp.togglePlay}
-        onWpmChange={(value) => setPreferences((state) => ({ ...state, wpm: value }))}
-      />
-      <SettingsPanel
-        preferences={preferences}
-        onThemeToggle={() =>
-          setPreferences((state) => ({ ...state, theme: state.theme === 'dark' ? 'light' : 'dark' }))
-        }
-        onFontSizeChange={(size) => setPreferences((state) => ({ ...state, fontSize: size }))}
-        onFontFamilyChange={(family) => setPreferences((state) => ({ ...state, fontFamily: family }))}
-      />
-    </main>
+      <main className="mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-8">
+        {isFocusMode ? null : (
+          <ReaderHeader
+            authorName={meta?.authorName ?? author}
+            langName={meta?.langName ?? lang}
+            title={meta?.title ?? uid}
+            uid={uid}
+            actions={
+              <>
+                <button
+                  className="ui-button rounded px-3 py-1 text-sm"
+                  type="button"
+                  onClick={() => navigate('/')}
+                >
+                  Back to Search
+                </button>
+                <a
+                  className="ui-link text-sm"
+                  href={suttaCentralUrl}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  Open on SuttaCentral
+                </a>
+                {meta?.translations.length ? (
+                  <label className="flex items-center gap-2 text-sm">
+                    <span className="ui-muted">Translation</span>
+                    <select
+                      aria-label="Switch translation"
+                      className="ui-input rounded px-2 py-1"
+                      value={translationKey}
+                      onChange={(event) => {
+                        const [nextLang, nextAuthor] = event.target.value.split(':');
+                        if (
+                          !nextLang ||
+                          !nextAuthor ||
+                          (nextLang === lang && nextAuthor === author)
+                        ) {
+                          return;
+                        }
+                        navigate(`/read/${uid}/${nextLang}/${nextAuthor}`);
+                      }}
+                    >
+                      {meta.translations.map((option) => {
+                        const optionKey = `${option.lang}:${option.author}`;
+                        return (
+                          <option key={optionKey} value={optionKey}>
+                            {`${option.langName} — ${option.authorName}`}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </label>
+                ) : null}
+              </>
+            }
+          />
+        )}
+
+        {isFocusMode ? null : (
+          <section className="ui-panel-soft rounded p-3">
+            <SearchInput onSelectUid={(nextUid) => navigate(`/read/${nextUid}`)} />
+          </section>
+        )}
+
+        {!isFocusMode && resumePosition !== null ? (
+          <section className="ui-panel-soft rounded p-3 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-0 flex-1">Resume where you left off?</span>
+              <button
+                className="ui-button rounded px-2 py-1"
+                type="button"
+                onClick={() => {
+                  rsvp.seekTo(resumePosition);
+                  clearResume();
+                }}
+              >
+                Resume
+              </button>
+              <button className="ui-button rounded px-2 py-1" type="button" onClick={clearResume}>
+                Start over
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        <RSVPDisplay
+          chunk={rsvp.currentChunk}
+          fontFamily={preferences.fontFamily}
+          fontSize={preferences.fontSize}
+        />
+
+        {isFocusMode ? null : (
+          <>
+            <ProgressBar
+              progress={rsvp.progress}
+              timeRemainingMs={rsvp.timeRemainingMs}
+              totalChunks={rsvp.totalChunks}
+              onSeek={rsvp.seekTo}
+            />
+            <div className="hidden md:block">
+              <ReaderControls
+                chunkSize={preferences.chunkSize}
+                isPlaying={rsvp.isPlaying}
+                wpm={preferences.wpm}
+                onChunkSizeChange={(value) =>
+                  setPreferences((state) => ({ ...state, chunkSize: value }))
+                }
+                onRestart={rsvp.restart}
+                onSkipBackward={rsvp.skipBackward}
+                onSkipForward={rsvp.skipForward}
+                onTogglePlay={rsvp.togglePlay}
+                onWpmChange={(value) => setPreferences((state) => ({ ...state, wpm: value }))}
+              />
+            </div>
+            <SettingsPanel
+              preferences={preferences}
+              onThemeToggle={() =>
+                setPreferences((state) => ({
+                  ...state,
+                  theme: state.theme === 'dark' ? 'light' : 'dark',
+                }))
+              }
+              onFontSizeChange={(size) => setPreferences((state) => ({ ...state, fontSize: size }))}
+              onFontFamilyChange={(family) =>
+                setPreferences((state) => ({ ...state, fontFamily: family }))
+              }
+              onFocusModeToggle={() =>
+                setPreferences((state) => ({ ...state, focusMode: !state.focusMode }))
+              }
+            />
+          </>
+        )}
+      </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
+        <ReaderControls
+          chunkSize={preferences.chunkSize}
+          compact
+          isPlaying={rsvp.isPlaying}
+          wpm={preferences.wpm}
+          onChunkSizeChange={(value) => setPreferences((state) => ({ ...state, chunkSize: value }))}
+          onRestart={rsvp.restart}
+          onSkipBackward={rsvp.skipBackward}
+          onSkipForward={rsvp.skipForward}
+          onTogglePlay={rsvp.togglePlay}
+          onWpmChange={(value) => setPreferences((state) => ({ ...state, wpm: value }))}
+        />
+      </div>
+    </>
   );
 }

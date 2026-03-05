@@ -45,6 +45,19 @@ describe('useKeyboard', () => {
     expect(handlers.goHome).toHaveBeenCalled();
   });
 
+  it('uses Escape to exit focus mode before navigating home', () => {
+    const handlers = {
+      goHome: vi.fn(),
+      exitFocusMode: vi.fn(),
+    };
+
+    render(<Harness handlers={handlers} />);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(handlers.exitFocusMode).toHaveBeenCalled();
+    expect(handlers.goHome).not.toHaveBeenCalled();
+  });
+
   it('ignores shortcuts when input is focused', () => {
     const handlers = { togglePlay: vi.fn() };
     const { getByLabelText } = render(<Harness handlers={handlers} />);

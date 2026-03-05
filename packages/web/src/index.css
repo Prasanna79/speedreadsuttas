@@ -61,7 +61,8 @@ body {
 }
 
 .reader-font-mono {
-  font-family: 'Iosevka Term', 'JetBrains Mono', 'Fira Code', 'Cascadia Mono', ui-monospace, monospace;
+  font-family:
+    'Iosevka Term', 'JetBrains Mono', 'Fira Code', 'Cascadia Mono', ui-monospace, monospace;
 }
 
 .reader-font-dyslexic {
@@ -150,4 +151,9 @@ select {
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+:root.reader-focus-mode [data-site-chrome='nav'],
+:root.reader-focus-mode [data-site-chrome='footer'] {
+  display: none;
 }
