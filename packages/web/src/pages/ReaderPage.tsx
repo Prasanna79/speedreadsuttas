@@ -168,7 +168,7 @@ function ReaderLoaded({
       {resumePosition !== null ? (
         <section className="ui-panel-soft rounded p-3 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="min-w-0 flex-1">{`Resume from ${resumePosition + 1}?`}</span>
+            <span className="min-w-0 flex-1">Resume where you left off?</span>
             <button className="ui-button rounded px-2 py-1" type="button" onClick={() => {
               rsvp.seekTo(resumePosition);
               clearResume();
