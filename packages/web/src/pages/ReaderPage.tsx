@@ -166,17 +166,19 @@ function ReaderLoaded({
       />
 
       {resumePosition !== null ? (
-        <section className="ui-panel-soft flex items-center gap-2 rounded p-3 text-sm">
-          <span>{`Resume from ${resumePosition + 1}?`}</span>
-          <button className="ui-button rounded px-2 py-1" type="button" onClick={() => {
-            rsvp.seekTo(resumePosition);
-            clearResume();
-          }}>
-            Resume
-          </button>
-          <button className="ui-button rounded px-2 py-1" type="button" onClick={clearResume}>
-            Start over
-          </button>
+        <section className="ui-panel-soft rounded p-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="min-w-0 flex-1">{`Resume from ${resumePosition + 1}?`}</span>
+            <button className="ui-button rounded px-2 py-1" type="button" onClick={() => {
+              rsvp.seekTo(resumePosition);
+              clearResume();
+            }}>
+              Resume
+            </button>
+            <button className="ui-button rounded px-2 py-1" type="button" onClick={clearResume}>
+              Start over
+            </button>
+          </div>
         </section>
       ) : null}
 

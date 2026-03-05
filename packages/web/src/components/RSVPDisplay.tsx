@@ -20,7 +20,7 @@ function renderWord(token: Token): ReactNode {
   const after = chars.slice(orpIndex + 1).join('');
 
   return (
-    <span key={`${token.segmentId}:${token.index}`} className="inline-flex items-center gap-0.5">
+    <span key={`${token.segmentId}:${token.index}`} className="align-baseline whitespace-pre">
       <span>{before}</span>
       <span className="ui-accent" data-testid="orp-char">
         {orpChar}
@@ -41,7 +41,7 @@ export function RSVPDisplay({ chunk, fontSize }: RSVPDisplayProps) {
       aria-live="polite"
       className="ui-panel relative flex min-h-56 items-center justify-center rounded px-6 py-10 text-center"
     >
-      <div className={`font-serif leading-tight ${fontSizeClassMap[fontSize]}`}>
+      <div className={`font-serif leading-tight [font-variant-numeric:lining-nums_tabular-nums] ${fontSizeClassMap[fontSize]}`}>
         {chunk.map((token, index) => (
           <span key={`${token.segmentId}:${token.index}`}>
             {renderWord(token)}
