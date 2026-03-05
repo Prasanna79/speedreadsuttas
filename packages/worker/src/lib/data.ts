@@ -88,10 +88,16 @@ export function getSuttaMeta(uid: string): SuttaMeta {
   }
 
   const entry = searchIndexByUid.get(normalizedUid);
+  let fallbackCollection: string;
+  try {
+    fallbackCollection = parseUid(normalizedUid).collection;
+  } catch {
+    throw new NotFoundError('Sutta not found');
+  }
 
   return {
     uid: normalizedUid,
-    collection: entry?.c ?? parseUid(normalizedUid).collection,
+    collection: entry?.c ?? fallbackCollection,
     title: entry?.p ?? entry?.t ?? normalizedUid,
     translations,
   };
@@ -110,7 +116,12 @@ export async function getSuttaText(
   const candidates = [normalizedUid, ...buildAnRangeCandidates(normalizedUid).slice(1)];
 
   for (const candidateUid of candidates) {
-    const key = toPosixPath(buildTextPath(candidateUid, normalizedLang, normalizedAuthor));
+    let key: string;
+    try {
+      key = toPosixPath(buildTextPath(candidateUid, normalizedLang, normalizedAuthor));
+    } catch {
+      throw new NotFoundError('Sutta text not found');
+    }
     const textJson = await loadTextJson(env, key);
     if (!textJson) {
       continue;

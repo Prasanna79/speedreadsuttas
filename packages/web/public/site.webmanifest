@@ -1,0 +1,22 @@
+{
+  "name": "SuttaSpeed",
+  "short_name": "SuttaSpeed",
+  "description": "Speed-read Buddhist suttas with focus mode, chunk control, and translation switching.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#efe3d2",
+  "theme_color": "#c46629",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

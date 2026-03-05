@@ -3,6 +3,10 @@ const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:5173'];
 const SECURITY_HEADERS: Record<string, string> = {
   'Content-Type': 'application/json; charset=utf-8',
   'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
 };
 
 export function getAllowedOrigins(raw: string | undefined): Set<string> {

@@ -16,6 +16,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 concurrency:
   group: bilara-sync
   cancel-in-progress: false

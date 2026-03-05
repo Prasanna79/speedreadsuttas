@@ -71,6 +71,17 @@ describe('worker api', () => {
     expect(payload.some((entry) => entry.uid === 'mn1')).toBe(true);
   });
 
+  it('returns health response for readiness checks', async () => {
+    const env = createEnv({});
+    const response = await worker.fetch(new Request('https://example.com/api/v1/healthz'), env);
+    const payload = (await response.json()) as { ok: boolean; timestamp: number };
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(payload.ok).toBe(true);
+    expect(typeof payload.timestamp).toBe('number');
+  });
+
   it('returns sorted text segments for a direct text file', async () => {
     const key = buildTextPath('mn1', 'en', 'sujato');
     const env = createEnv({
@@ -117,6 +128,17 @@ describe('worker api', () => {
 
     expect(response.status).toBe(404);
     expect(payload.error).toBe('Sutta not found');
+  });
+
+  it('returns 404 for unsupported uid formats in text route', async () => {
+    const env = createEnv({});
+    const request = new Request('https://example.com/api/v1/sutta/kn1.1/text/pli/ms');
+
+    const response = await worker.fetch(request, env);
+    const payload = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(404);
+    expect(payload.error).toBe('Sutta text not found');
   });
 
   it('returns 400 for malformed path values', async () => {

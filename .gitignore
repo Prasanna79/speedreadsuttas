@@ -1,6 +1,8 @@
 node_modules
 .pnpm-store
 coverage
+.cache
+logs
 .dist
 .vite
 .wrangler

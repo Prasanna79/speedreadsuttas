@@ -8,6 +8,7 @@ import { handleSuttaText } from './routes/text';
 
 const CACHE_SUTTA = 'public, s-maxage=86400';
 const CACHE_SEARCH = 'public, s-maxage=86400, stale-while-revalidate=604800';
+const CACHE_HEALTH = 'no-store';
 
 const SUTTA_META_PATTERN = /^\/api\/v1\/sutta\/([^/]+)$/u;
 const SUTTA_TEXT_PATTERN = /^\/api\/v1\/sutta\/([^/]+)\/text\/([^/]+)\/([^/]+)$/u;
@@ -51,6 +52,10 @@ export default {
     }
 
     try {
+      if (url.pathname === '/api/v1/healthz') {
+        return jsonResponse({ ok: true, timestamp: Date.now() }, 200, CACHE_HEALTH, origin, allowedOrigins);
+      }
+
       if (url.pathname === '/api/v1/search/index') {
         const payload = await handleSearchIndex();
         return jsonResponse(payload, 200, CACHE_SEARCH, origin, allowedOrigins);

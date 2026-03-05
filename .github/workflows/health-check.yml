@@ -1,0 +1,33 @@
+name: Production Health Check
+
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check web home
+        run: |
+          html="$(curl -fsS https://suttaspeed.com)"
+          echo "$html" | grep -q '<title>SuttaSpeed</title>'
+
+      - name: Check API health
+        run: |
+          payload="$(curl -fsS https://api.suttaspeed.com/api/v1/healthz)"
+          echo "$payload" | jq -e '.ok == true' > /dev/null
+
+      - name: Check catalog size
+        run: |
+          count="$(curl -fsS https://api.suttaspeed.com/api/v1/search/index | jq 'length')"
+          test "$count" -ge 4000
+
+      - name: Check sample sutta payload
+        run: |
+          count="$(curl -fsS https://api.suttaspeed.com/api/v1/sutta/mn1/text/en/sujato | jq '.segments | length')"
+          test "$count" -gt 0
