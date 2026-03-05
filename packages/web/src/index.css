@@ -2,20 +2,124 @@
 
 :root {
   color-scheme: light;
+  --app-bg-top: #f9f3e8;
+  --app-bg-bottom: #efe3d2;
+  --surface: #fffaf2;
+  --surface-soft: #f4e8d8;
+  --text-primary: #221d17;
+  --text-muted: #5f5548;
+  --border: #d7c6af;
+  --accent: #c46629;
+  --accent-soft: #f4dbc0;
+  --accent-contrast: #fff9f2;
+  --focus-ring: #e58a45;
+  --surface-shadow: 0 12px 28px rgb(64 45 22 / 8%);
 }
 
 :root.dark {
   color-scheme: dark;
+  --app-bg-top: #0f151d;
+  --app-bg-bottom: #17222e;
+  --surface: #1c2733;
+  --surface-soft: #263545;
+  --text-primary: #e9edf2;
+  --text-muted: #adbac8;
+  --border: #3c4c5e;
+  --accent: #ef9e59;
+  --accent-soft: #453022;
+  --accent-contrast: #1b130d;
+  --focus-ring: #f6b37a;
+  --surface-shadow: 0 18px 38px rgb(0 0 0 / 35%);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Literata", "EB Garamond", Georgia, serif;
+  background: linear-gradient(180deg, var(--app-bg-top) 0%, var(--app-bg-bottom) 100%);
+  color: var(--text-primary);
+  font-family: 'Literata', 'EB Garamond', Georgia, serif;
+}
+
+a {
+  color: inherit;
 }
 
 button,
 input,
 select {
   font: inherit;
+}
+
+.ui-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--surface-shadow);
+}
+
+.ui-panel-soft {
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text-primary);
+}
+
+.ui-input {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.ui-input::placeholder {
+  color: var(--text-muted);
+}
+
+.ui-button {
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text-primary);
+}
+
+.ui-button:hover {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.ui-button-accent {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.ui-button-accent:hover {
+  filter: brightness(1.05);
+}
+
+.ui-button-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.ui-button-inactive {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.ui-muted {
+  color: var(--text-muted);
+}
+
+.ui-accent {
+  color: var(--accent);
+}
+
+.ui-link {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }

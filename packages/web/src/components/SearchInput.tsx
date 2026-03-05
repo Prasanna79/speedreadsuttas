@@ -57,7 +57,7 @@ export function SearchInput({ onSelectUid }: SearchInputProps) {
     <div className="relative w-full max-w-2xl">
       <input
         aria-label="Search sutta"
-        className="w-full rounded border border-stone-300 px-4 py-3 text-lg shadow-sm"
+        className="ui-input w-full rounded px-4 py-3 text-lg shadow-sm"
         placeholder="Enter a sutta (e.g. MN 1, sn12.2, mūlapariyāya)"
         value={value}
         onChange={(event) => {
@@ -95,16 +95,16 @@ export function SearchInput({ onSelectUid }: SearchInputProps) {
       />
 
       {shouldShow ? (
-        <ul className="absolute z-10 mt-2 w-full rounded border border-stone-200 bg-white shadow-lg" role="listbox">
+        <ul className="ui-panel absolute z-10 mt-2 w-full rounded shadow-lg" role="listbox">
           {results.slice(0, 8).map((result, indexValue) => (
             <li key={result.uid}>
               <button
-                className={`block w-full px-4 py-2 text-left ${highlighted === indexValue ? 'bg-orange-100' : ''}`}
+                className={`block w-full px-4 py-2 text-left ${highlighted === indexValue ? 'ui-button-accent' : 'hover:bg-[var(--surface-soft)]'}`}
                 type="button"
                 onClick={() => onSelectUid(result.uid)}
               >
                 <span className="font-semibold">{result.uid.toUpperCase()}</span>
-                <span className="text-stone-600">{` — ${result.t}`}</span>
+                <span className="ui-muted">{` — ${result.t}`}</span>
               </button>
             </li>
           ))}

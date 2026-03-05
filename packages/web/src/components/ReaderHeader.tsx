@@ -9,7 +9,7 @@ export function ReaderHeader({ uid, title, langName, authorName }: ReaderHeaderP
   return (
     <header className="space-y-1">
       <h1 className="text-2xl font-semibold tracking-tight">{`${uid.toUpperCase()} — ${title}`}</h1>
-      <p className="text-sm text-stone-600">{`${langName} · ${authorName}`}</p>
+      <p className="ui-muted text-sm">{`${langName} · ${authorName}`}</p>
     </header>
   );
 }

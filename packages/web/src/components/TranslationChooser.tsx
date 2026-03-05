@@ -42,11 +42,11 @@ export function TranslationChooser({ uid }: TranslationChooserProps) {
   }, [translations]);
 
   return (
-    <section className="grid gap-4 rounded border border-stone-200 bg-white p-5">
+    <section className="ui-panel grid gap-4 rounded p-5">
       <h2 className="text-xl font-semibold">Choose translation</h2>
       {Object.entries(grouped).map(([lang, options]) => (
         <fieldset key={lang} className="grid gap-2">
-          <legend className="text-sm font-semibold text-stone-700">{lang}</legend>
+          <legend className="text-sm font-semibold ui-muted">{lang}</legend>
           {options.map((option) => {
             const key = `${option.lang}:${option.author}`;
             return (
@@ -66,7 +66,7 @@ export function TranslationChooser({ uid }: TranslationChooserProps) {
       ))}
 
       <button
-        className="rounded bg-orange-500 px-4 py-2 text-white"
+        className="ui-button-accent rounded px-4 py-2"
         type="button"
         onClick={() => {
           const [lang, author] = selected.split(':');

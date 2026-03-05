@@ -22,7 +22,7 @@ function renderWord(token: Token): ReactNode {
   return (
     <span key={`${token.segmentId}:${token.index}`} className="inline-flex items-center gap-0.5">
       <span>{before}</span>
-      <span className="text-orange-600" data-testid="orp-char">
+      <span className="ui-accent" data-testid="orp-char">
         {orpChar}
       </span>
       <span>{after}</span>
@@ -33,13 +33,13 @@ function renderWord(token: Token): ReactNode {
 
 export function RSVPDisplay({ chunk, fontSize }: RSVPDisplayProps) {
   if (!chunk || chunk.length === 0) {
-    return <section className="rounded border border-stone-200 p-8 text-center text-stone-500">No text loaded</section>;
+    return <section className="ui-panel rounded p-8 text-center ui-muted">No text loaded</section>;
   }
 
   return (
     <section
       aria-live="polite"
-      className="relative flex min-h-56 items-center justify-center rounded border border-stone-200 bg-white px-6 py-10 text-center shadow-sm"
+      className="ui-panel relative flex min-h-56 items-center justify-center rounded px-6 py-10 text-center"
     >
       <div className={`font-serif leading-tight ${fontSizeClassMap[fontSize]}`}>
         {chunk.map((token, index) => (
@@ -49,8 +49,8 @@ export function RSVPDisplay({ chunk, fontSize }: RSVPDisplayProps) {
           </span>
         ))}
       </div>
-      <div className="pointer-events-none absolute top-2 h-0 w-0 border-x-8 border-b-8 border-x-transparent border-b-orange-500" />
-      <div className="pointer-events-none absolute bottom-2 h-0 w-0 border-x-8 border-t-8 border-x-transparent border-t-orange-500" />
+      <div className="pointer-events-none absolute top-2 h-0 w-0 border-x-8 border-b-8 border-x-transparent border-b-[var(--accent)]" />
+      <div className="pointer-events-none absolute bottom-2 h-0 w-0 border-x-8 border-t-8 border-x-transparent border-t-[var(--accent)]" />
     </section>
   );
 }

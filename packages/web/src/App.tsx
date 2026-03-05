@@ -7,7 +7,7 @@ import { ReaderPage } from './pages/ReaderPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gradient-to-b from-stone-50 via-amber-50 to-orange-100 text-stone-900 dark:from-stone-900 dark:via-stone-900 dark:to-stone-800 dark:text-stone-100">
+      <div className="min-h-screen">
         <Routes>
           <Route element={<HomePage />} path="/" />
           <Route element={<ReaderPage />} path="/read/:uid" />

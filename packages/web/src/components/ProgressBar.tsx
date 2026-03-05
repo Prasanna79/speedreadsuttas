@@ -12,7 +12,7 @@ export function ProgressBar({ progress, timeRemainingMs, onSeek, totalChunks }: 
     <div>
       <button
         aria-label="Seek progress"
-        className="h-3 w-full overflow-hidden rounded bg-stone-200"
+        className="h-3 w-full overflow-hidden rounded bg-[var(--surface-soft)]"
         type="button"
         onClick={(event) => {
           const target = event.currentTarget.getBoundingClientRect();
@@ -21,12 +21,12 @@ export function ProgressBar({ progress, timeRemainingMs, onSeek, totalChunks }: 
         }}
       >
         <span
-          className="block h-full bg-orange-500 transition-all"
+          className="block h-full bg-[var(--accent)] transition-all"
           data-testid="progress-fill"
           style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }}
         />
       </button>
-      <p className="mt-2 text-sm text-stone-600">{`${Math.round(progress * 100)}% · ${formatTimeRemaining(timeRemainingMs)}`}</p>
+      <p className="ui-muted mt-2 text-sm">{`${Math.round(progress * 100)}% · ${formatTimeRemaining(timeRemainingMs)}`}</p>
     </div>
   );
 }

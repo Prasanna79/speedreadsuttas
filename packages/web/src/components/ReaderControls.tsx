@@ -22,23 +22,23 @@ export function ReaderControls({
   onRestart,
 }: ReaderControlsProps) {
   return (
-    <section className="grid gap-3 rounded border border-stone-200 bg-stone-50 p-4">
+    <section className="ui-panel-soft grid gap-3 rounded p-4">
       <div className="flex items-center gap-2">
-        <button aria-label="Skip backward" className="rounded border px-3 py-2" type="button" onClick={onSkipBackward}>
+        <button aria-label="Skip backward" className="ui-button rounded px-3 py-2" type="button" onClick={onSkipBackward}>
           ←
         </button>
-        <button aria-label="Play or pause" className="rounded border px-4 py-2" type="button" onClick={onTogglePlay}>
+        <button aria-label="Play or pause" className="ui-button rounded px-4 py-2" type="button" onClick={onTogglePlay}>
           {isPlaying ? 'Pause' : 'Play'}
         </button>
-        <button aria-label="Skip forward" className="rounded border px-3 py-2" type="button" onClick={onSkipForward}>
+        <button aria-label="Skip forward" className="ui-button rounded px-3 py-2" type="button" onClick={onSkipForward}>
           →
         </button>
-        <button aria-label="Restart" className="rounded border px-3 py-2" type="button" onClick={onRestart}>
+        <button aria-label="Restart" className="ui-button rounded px-3 py-2" type="button" onClick={onRestart}>
           Restart
         </button>
       </div>
 
-      <label className="text-sm font-medium text-stone-700" htmlFor="wpm-slider">
+      <label className="text-sm font-medium ui-muted" htmlFor="wpm-slider">
         WPM: {wpm}
       </label>
       <input
@@ -53,12 +53,12 @@ export function ReaderControls({
       />
 
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-stone-700">Chunk</span>
+        <span className="text-sm font-medium ui-muted">Chunk</span>
         {[1, 2, 3, 4].map((value) => (
           <button
             key={value}
             aria-label={`Chunk ${value}`}
-            className={`rounded border px-3 py-1 ${chunkSize === value ? 'bg-orange-500 text-white' : 'bg-white'}`}
+            className={`rounded px-3 py-1 ${chunkSize === value ? 'ui-button-active' : 'ui-button-inactive'}`}
             type="button"
             onClick={() => onChunkSizeChange(value)}
           >

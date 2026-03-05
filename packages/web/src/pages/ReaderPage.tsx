@@ -82,7 +82,7 @@ export function ReaderPage() {
     return (
       <main className="mx-auto grid min-h-screen max-w-2xl place-items-center gap-4 px-6 py-12 text-center">
         <p>{error === 'Sutta not found' ? 'Sutta not found' : 'Unable to load'}</p>
-        <button className="rounded border px-4 py-2" type="button" onClick={() => navigate(0)}>
+        <button className="ui-button rounded px-4 py-2" type="button" onClick={() => navigate(0)}>
           Retry
         </button>
       </main>
@@ -166,15 +166,15 @@ function ReaderLoaded({
       />
 
       {resumePosition !== null ? (
-        <section className="flex items-center gap-2 rounded border border-orange-200 bg-orange-50 p-3 text-sm">
+        <section className="ui-panel-soft flex items-center gap-2 rounded p-3 text-sm">
           <span>{`Resume from ${resumePosition + 1}?`}</span>
-          <button className="rounded border bg-white px-2 py-1" type="button" onClick={() => {
+          <button className="ui-button rounded px-2 py-1" type="button" onClick={() => {
             rsvp.seekTo(resumePosition);
             clearResume();
           }}>
             Resume
           </button>
-          <button className="rounded border bg-white px-2 py-1" type="button" onClick={clearResume}>
+          <button className="ui-button rounded px-2 py-1" type="button" onClick={clearResume}>
             Start over
           </button>
         </section>
