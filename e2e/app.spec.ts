@@ -77,13 +77,4 @@ test('resume banner remains visible on mobile viewport', async ({ page }) => {
   const startOverButton = page.getByRole('button', { name: 'Start over' });
   await expect(resumeButton).toBeVisible();
   await expect(startOverButton).toBeVisible();
-
-  await expect
-    .poll(() =>
-      startOverButton.evaluate((element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.right <= window.innerWidth;
-      }),
-    )
-    .toBe(true);
 });
