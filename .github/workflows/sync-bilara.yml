@@ -1,0 +1,56 @@
+name: Sync Bilara to R2
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: bilara-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      R2_BUCKET: speedreadsuttas-data
+      BILARA_DATA_DIR: ${{ github.workspace }}/bilara-data
+      SYNC_STATE_FILE: ${{ github.workspace }}/.cache/r2-sync-manifest.json
+    steps:
+      - name: Checkout app repo
+        uses: actions/checkout@v4
+
+      - name: Checkout bilara-data published
+        uses: actions/checkout@v4
+        with:
+          repository: suttacentral/bilara-data
+          ref: published
+          path: bilara-data
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build search index + manifest
+        run: pnpm data:build-index
+
+      - name: Sync text files to R2
+        run: pnpm data:sync-r2
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Deploy Worker with fresh data
+        run: pnpm --filter @palispeedread/worker deploy

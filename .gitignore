@@ -10,4 +10,6 @@ coverage
 packages/worker/.wrangler
 packages/worker/dist
 packages/web/dist
+playwright-report
+test-results
 bilara-data
