@@ -40,18 +40,20 @@ test('theme toggle persists on reader page', async ({ page }) => {
 
   await page.getByText('Settings').click();
 
-  const isDarkBefore = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+  const isDarkBefore = await page.evaluate(() =>
+    document.documentElement.classList.contains('dark'),
+  );
   await page.getByRole('button', { name: 'Toggle dark mode' }).click();
 
-  await expect.poll(async () => page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(
-    !isDarkBefore,
-  );
+  await expect
+    .poll(async () => page.evaluate(() => document.documentElement.classList.contains('dark')))
+    .toBe(!isDarkBefore);
 
   await page.reload();
   await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
-  await expect.poll(async () => page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(
-    !isDarkBefore,
-  );
+  await expect
+    .poll(async () => page.evaluate(() => document.documentElement.classList.contains('dark')))
+    .toBe(!isDarkBefore);
 });
 
 test('resume banner remains visible on mobile viewport', async ({ page }) => {
@@ -77,4 +79,82 @@ test('resume banner remains visible on mobile viewport', async ({ page }) => {
   const startOverButton = page.getByRole('button', { name: 'Start over' });
   await expect(resumeButton).toBeVisible();
   await expect(startOverButton).toBeVisible();
+});
+
+test('reader tokenization splits em-dash joins and preserves segment order', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 1,
+        theme: 'light',
+        fontSize: 'normal',
+        fontFamily: 'serif',
+      }),
+    );
+  });
+
+  await page.route('**/api/v1/sutta/mn19', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid: 'mn19',
+        collection: 'mn',
+        title: 'Tokenization Mock',
+        translations: [
+          {
+            lang: 'en',
+            langName: 'English',
+            author: 'sujato',
+            authorName: 'Bhikkhu Sujato',
+            isRoot: false,
+            publication: 'SuttaCentral',
+            licence: 'CC0 1.0',
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/sutta/mn19/text/en/sujato', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid: 'mn19',
+        lang: 'en',
+        author: 'sujato',
+        segments: [
+          { id: 'mn19:0.1', text: 'Intro' },
+          { id: 'mn19:4-5.1', text: 'late' },
+          { id: 'mn19:1.1', text: 'awakening—I' },
+          { id: 'mn19:2.1', text: 'middle' },
+        ],
+      }),
+    });
+  });
+
+  await page.goto('/read/mn19/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN19/i })).toBeVisible({ timeout: 15_000 });
+
+  const display = page.locator('section[aria-live="polite"]');
+  const skipForward = page.getByRole('button', { name: 'Skip forward' });
+
+  await expect(display).toContainText('Intro');
+
+  await skipForward.click();
+  await expect(display).toContainText('awakening');
+  await expect(display).toContainText('—');
+  await expect(display).not.toContainText('awakening—I');
+
+  await skipForward.click();
+  await expect(display).toContainText('I');
+
+  await skipForward.click();
+  await expect(display).toContainText('middle');
+
+  await skipForward.click();
+  await expect(display).toContainText('late');
 });
