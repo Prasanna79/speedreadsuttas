@@ -9,7 +9,7 @@ routes = [
 ]
 
 [vars]
-ALLOWED_ORIGINS = "http://localhost:5173,https://suttaspeed.com,https://www.suttaspeed.com"
+ALLOWED_ORIGINS = "http://localhost:5173,https://suttaspeed.com,https://www.suttaspeed.com,https://suttaspeed.pages.dev"
 
 [[r2_buckets]]
 binding = "SUTTA_TEXT"
