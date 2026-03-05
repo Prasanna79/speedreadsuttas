@@ -29,14 +29,22 @@ pnpm exec wrangler pages project create suttaspeed
 
 Build output directory: `packages/web/dist`
 
-## 4. Configure DNS / custom domains in Cloudflare dashboard
+## 4. DNS/custom domain automation
 
-1. Add/verify zone for `suttaspeed.com`.
-2. Worker route/custom domain:
-   - `api.suttaspeed.com` -> `palispeedread-worker`
-3. Pages custom domain:
+One-time prerequisite:
+1. Add/verify zone for `suttaspeed.com` and point registrar nameservers to Cloudflare.
+
+After that, CI handles the rest on every `main` deploy:
+1. Worker custom domain:
+   - `api.suttaspeed.com` -> `palispeedread-worker` (from `wrangler.toml`)
+2. Pages custom domains:
    - `suttaspeed.com`
-   - `www.suttaspeed.com` (optional)
+   - `www.suttaspeed.com`
+
+Required token scopes for `CF_API_TOKEN`:
+- Account: `Cloudflare Pages:Edit`
+- Account: `Workers Scripts:Edit`
+- Zone: `Zone:Read`
 
 ## 5. Build web against API domain
 

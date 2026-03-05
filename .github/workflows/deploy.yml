@@ -47,6 +47,30 @@ jobs:
       - name: Deploy Pages
         run: pnpm --filter @palispeedread/worker exec wrangler pages deploy ../../packages/web/dist --project-name suttaspeed
 
+      - name: Ensure Pages custom domains
+        run: |
+          DOMAIN_API="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/suttaspeed/domains"
+
+          ensure_domain() {
+            local domain="$1"
+            if curl -fsS -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" "$DOMAIN_API" \
+              | jq -e --arg domain "$domain" '.result[]? | select(.name == $domain)' > /dev/null; then
+              echo "Domain already present: $domain"
+              return 0
+            fi
+
+            echo "Creating domain: $domain"
+            curl -fsS -X POST \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "$DOMAIN_API" \
+              --data "{\"name\":\"$domain\"}" \
+              | jq -e '.success == true' > /dev/null
+          }
+
+          ensure_domain "suttaspeed.com"
+          ensure_domain "www.suttaspeed.com"
+
   e2e:
     needs: deploy
     runs-on: ubuntu-latest
