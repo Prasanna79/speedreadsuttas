@@ -135,6 +135,9 @@ function ReaderLoaded({
   const translationKey = `${lang}:${author}`;
   const suttaCentralUrl = `https://suttacentral.net/${uid}/${lang}/${author}`;
   const isFocusMode = preferences.focusMode;
+  const readerMainClassName = isFocusMode
+    ? 'mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-[calc(7rem+env(safe-area-inset-bottom))]'
+    : 'mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-8';
 
   const rsvp = useRSVP(tokens, preferences.wpm, preferences.chunkSize);
   const { resumePosition, clearResume } = useLastRead({
@@ -196,7 +199,7 @@ function ReaderLoaded({
         </button>
       ) : null}
 
-      <main className="mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-8">
+      <main className={readerMainClassName}>
         {isFocusMode ? null : (
           <ReaderHeader
             authorName={meta?.authorName ?? author}
@@ -331,7 +334,9 @@ function ReaderLoaded({
         )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
+      <div
+        className={`fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] ${isFocusMode ? '' : 'md:hidden'}`.trim()}
+      >
         <ReaderControls
           chunkSize={preferences.chunkSize}
           compact

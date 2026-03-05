@@ -98,6 +98,8 @@ test('focus mode hides global chrome and can be exited', async ({ page }) => {
   await page.getByRole('button', { name: 'Toggle focus mode' }).click();
 
   await expect(page.getByRole('button', { name: 'Exit focus mode' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play or pause' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Skip forward' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'About' })).toBeHidden();
   await expect(page.getByRole('link', { name: 'Donate' })).toBeHidden();
 
