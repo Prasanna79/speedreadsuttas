@@ -68,12 +68,17 @@ export function ReaderPage() {
   const [error, setError] = useState<string | null>(null);
   const [tokens, setTokens] = useState<ReturnType<typeof tokenize>>([]);
   const [meta, setMeta] = useState<ReaderMeta | null>(null);
+  const [loadedRouteKey, setLoadedRouteKey] = useState<string | null>(null);
   const [neighbors, setNeighbors] = useState<CollectionNeighbors>({
     previousUid: null,
     nextUid: null,
   });
 
   const normalizedUid = useMemo(() => uid.trim().toLowerCase(), [uid]);
+  const routeKey = useMemo(
+    () => `${normalizedUid}:${lang ?? ''}:${author ?? ''}`,
+    [normalizedUid, lang, author],
+  );
 
   useEffect(() => {
     if (!normalizedUid || !lang || !author) {
@@ -98,15 +103,17 @@ export function ReaderPage() {
           translations: metaPayload.translations,
         });
         setTokens(tokenize(textPayload.segments));
+        setLoadedRouteKey(routeKey);
       })
       .catch((requestError: unknown) => {
         const message = requestError instanceof Error ? requestError.message : 'Unable to load';
         setError(message);
+        setLoadedRouteKey(null);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [normalizedUid, lang, author]);
+  }, [normalizedUid, lang, author, routeKey]);
 
   useEffect(() => {
     if (!normalizedUid || !lang || !author) {
@@ -146,7 +153,7 @@ export function ReaderPage() {
     );
   }
 
-  if (loading) {
+  if (loading || (!error && loadedRouteKey !== routeKey)) {
     return <p className="p-8 text-center">Loading reader…</p>;
   }
 
