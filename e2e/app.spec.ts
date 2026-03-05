@@ -30,8 +30,10 @@ test('reader route loads play controls for mn1', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Play or pause' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Restart' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Back to Search' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Full sutta' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'On SuttaCentral' })).toBeVisible();
   await expect(page.getByLabel('Switch translation')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previous sutta' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next sutta' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Enter focus mode' })).toBeVisible();
 });
 
@@ -108,29 +110,79 @@ test('focus mode hides global chrome and can be exited', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Donate' })).toBeVisible();
 });
 
-test('resume banner remains visible on mobile viewport', async ({ page }) => {
+test('reader auto-resumes from stored position', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 });
   await page.addInitScript(() => {
     window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 1,
+        theme: 'light',
+        fontSize: 'normal',
+        fontFamily: 'serif',
+        focusMode: false,
+      }),
+    );
+    window.localStorage.setItem(
       'palispeedread:last-read',
       JSON.stringify({
-        uid: 'mn1',
+        uid: 'mn19',
         lang: 'en',
         author: 'sujato',
-        position: 12,
+        position: 2,
         timestamp: Date.now(),
       }),
     );
   });
 
-  await page.goto('/read/mn1/en/sujato');
-  await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText('Resume where you left off?')).toBeVisible();
+  await page.route('**/api/v1/sutta/mn19', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid: 'mn19',
+        collection: 'mn',
+        title: 'Resume Mock',
+        translations: [
+          {
+            lang: 'en',
+            langName: 'English',
+            author: 'sujato',
+            authorName: 'Bhikkhu Sujato',
+            isRoot: false,
+            publication: 'SuttaCentral',
+            licence: 'CC0 1.0',
+          },
+        ],
+      }),
+    });
+  });
 
-  const resumeButton = page.getByRole('button', { name: 'Resume' });
-  const startOverButton = page.getByRole('button', { name: 'Start over' });
-  await expect(resumeButton).toBeVisible();
-  await expect(startOverButton).toBeVisible();
+  await page.route('**/api/v1/sutta/mn19/text/en/sujato', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid: 'mn19',
+        lang: 'en',
+        author: 'sujato',
+        segments: [
+          { id: 'mn19:0.1', text: 'intro' },
+          { id: 'mn19:1.1', text: 'first' },
+          { id: 'mn19:2.1', text: 'middle' },
+          { id: 'mn19:3.1', text: 'end' },
+        ],
+      }),
+    });
+  });
+
+  await page.goto('/read/mn19/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN19/i })).toBeVisible({ timeout: 15_000 });
+
+  const display = page.locator('section[aria-live="polite"]');
+  await expect(display).toContainText('middle');
+  await expect(page.getByText('Resume where you left off?')).toHaveCount(0);
 });
 
 test('reader tokenization splits em-dash joins and preserves segment order', async ({ page }) => {

@@ -58,8 +58,8 @@ export function RSVPDisplay({ chunk, fontSize, fontFamily }: RSVPDisplayProps) {
           </span>
         ))}
       </div>
-      <div className="pointer-events-none absolute top-2 h-0 w-0 border-x-8 border-b-8 border-x-transparent border-b-[var(--accent)]" />
-      <div className="pointer-events-none absolute bottom-2 h-0 w-0 border-x-8 border-t-8 border-x-transparent border-t-[var(--accent)]" />
+      <div className="pointer-events-none absolute top-2 h-0 w-0 border-x-8 border-t-8 border-x-transparent border-t-[var(--accent)]" />
+      <div className="pointer-events-none absolute bottom-2 h-0 w-0 border-x-8 border-b-8 border-x-transparent border-b-[var(--accent)]" />
     </section>
   );
 }

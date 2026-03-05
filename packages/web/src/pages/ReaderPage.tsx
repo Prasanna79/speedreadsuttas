@@ -1,11 +1,13 @@
 import {
+  parseUid,
   tokenize,
+  type SearchIndexEntry,
   type StoredPreferences,
   type TranslationOption,
   WPM_MAX,
   WPM_MIN,
 } from '@palispeedread/shared';
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ProgressBar } from '../components/ProgressBar';
@@ -19,13 +21,43 @@ import { useKeyboard } from '../hooks/useKeyboard';
 import { useLastRead } from '../hooks/useLastRead';
 import { usePreferences } from '../hooks/usePreferences';
 import { useRSVP } from '../hooks/useRSVP';
-import { fetchSuttaMeta, fetchSuttaText } from '../lib/api';
+import { fetchSearchIndex, fetchSuttaMeta, fetchSuttaText } from '../lib/api';
 
 interface ReaderMeta {
   title: string;
   langName: string;
   authorName: string;
   translations: TranslationOption[];
+}
+
+interface CollectionNeighbors {
+  previousUid: string | null;
+  nextUid: string | null;
+}
+
+const uidCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function resolveCollectionNeighbors(uid: string, index: SearchIndexEntry[]): CollectionNeighbors {
+  let collection: string;
+  try {
+    collection = parseUid(uid).collection;
+  } catch {
+    return { previousUid: null, nextUid: null };
+  }
+
+  const orderedUids = [
+    ...new Set(index.filter((entry) => entry.c === collection).map((entry) => entry.uid)),
+  ].sort((left, right) => uidCollator.compare(left, right));
+
+  const currentIndex = orderedUids.indexOf(uid);
+  if (currentIndex === -1) {
+    return { previousUid: null, nextUid: null };
+  }
+
+  return {
+    previousUid: orderedUids[currentIndex - 1] ?? null,
+    nextUid: orderedUids[currentIndex + 1] ?? null,
+  };
 }
 
 export function ReaderPage() {
@@ -36,6 +68,10 @@ export function ReaderPage() {
   const [error, setError] = useState<string | null>(null);
   const [tokens, setTokens] = useState<ReturnType<typeof tokenize>>([]);
   const [meta, setMeta] = useState<ReaderMeta | null>(null);
+  const [neighbors, setNeighbors] = useState<CollectionNeighbors>({
+    previousUid: null,
+    nextUid: null,
+  });
 
   const normalizedUid = useMemo(() => uid.trim().toLowerCase(), [uid]);
 
@@ -72,6 +108,32 @@ export function ReaderPage() {
       });
   }, [normalizedUid, lang, author]);
 
+  useEffect(() => {
+    if (!normalizedUid || !lang || !author) {
+      setNeighbors({ previousUid: null, nextUid: null });
+      return;
+    }
+
+    let isCancelled = false;
+    fetchSearchIndex()
+      .then((index) => {
+        if (isCancelled) {
+          return;
+        }
+        setNeighbors(resolveCollectionNeighbors(normalizedUid, index));
+      })
+      .catch(() => {
+        if (isCancelled) {
+          return;
+        }
+        setNeighbors({ previousUid: null, nextUid: null });
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [normalizedUid, lang, author]);
+
   if (!normalizedUid) {
     return <p className="p-8 text-center">Sutta not found</p>;
   }
@@ -105,6 +167,8 @@ export function ReaderPage() {
       lang={lang}
       meta={meta}
       preferences={preferences}
+      previousUid={neighbors.previousUid}
+      nextUid={neighbors.nextUid}
       setPreferences={setPreferences}
       tokens={tokens}
       uid={normalizedUid}
@@ -119,6 +183,8 @@ interface ReaderLoadedProps {
   tokens: ReturnType<typeof tokenize>;
   meta: ReaderMeta | null;
   preferences: StoredPreferences;
+  previousUid: string | null;
+  nextUid: string | null;
   setPreferences: Dispatch<SetStateAction<StoredPreferences>>;
 }
 
@@ -129,6 +195,8 @@ function ReaderLoaded({
   tokens,
   meta,
   preferences,
+  previousUid,
+  nextUid,
   setPreferences,
 }: ReaderLoadedProps) {
   const navigate = useNavigate();
@@ -140,13 +208,16 @@ function ReaderLoaded({
     : 'mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-8';
 
   const rsvp = useRSVP(tokens, preferences.wpm, preferences.chunkSize);
-  const { resumePosition, clearResume } = useLastRead({
+  const seekTo = rsvp.seekTo;
+  const { resumePosition } = useLastRead({
     uid,
     lang,
     author,
     position: rsvp.currentIndex,
     isPlaying: rsvp.isPlaying,
   });
+  const resumeAppliedKeyRef = useRef<string | null>(null);
+  const resumeKey = `${uid}:${lang}:${author}`;
 
   useKeyboard({
     togglePlay: rsvp.togglePlay,
@@ -186,6 +257,18 @@ function ReaderLoaded({
     };
   }, [isFocusMode]);
 
+  useEffect(() => {
+    if (resumePosition === null) {
+      return;
+    }
+    if (resumeAppliedKeyRef.current === resumeKey) {
+      return;
+    }
+
+    seekTo(resumePosition);
+    resumeAppliedKeyRef.current = resumeKey;
+  }, [resumeKey, resumePosition, seekTo]);
+
   return (
     <>
       {isFocusMode ? (
@@ -204,11 +287,49 @@ function ReaderLoaded({
           <ReaderHeader
             authorName={meta?.authorName ?? author}
             langName={meta?.langName ?? lang}
+            metaActions={
+              <button
+                aria-label="Enter focus mode"
+                className="ui-button rounded px-2 py-1"
+                type="button"
+                onClick={() => setPreferences((state) => ({ ...state, focusMode: true }))}
+              >
+                <span aria-hidden="true">◉</span>
+              </button>
+            }
             suttaCentralUrl={suttaCentralUrl}
             title={meta?.title ?? uid}
             uid={uid}
             actions={
               <>
+                <button
+                  aria-label="Previous sutta"
+                  className="ui-button rounded px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!previousUid}
+                  type="button"
+                  onClick={() => {
+                    if (!previousUid) {
+                      return;
+                    }
+                    navigate(`/read/${previousUid}`);
+                  }}
+                >
+                  ← Prev
+                </button>
+                <button
+                  aria-label="Next sutta"
+                  className="ui-button rounded px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!nextUid}
+                  type="button"
+                  onClick={() => {
+                    if (!nextUid) {
+                      return;
+                    }
+                    navigate(`/read/${nextUid}`);
+                  }}
+                >
+                  Next →
+                </button>
                 <button
                   className="ui-button rounded px-3 py-1 text-sm"
                   type="button"
@@ -252,44 +373,10 @@ function ReaderLoaded({
         )}
 
         {isFocusMode ? null : (
-          <section className="flex justify-end">
-            <button
-              aria-label="Enter focus mode"
-              className="ui-button-accent rounded px-3 py-2 text-sm"
-              type="button"
-              onClick={() => setPreferences((state) => ({ ...state, focusMode: true }))}
-            >
-              Focus mode
-            </button>
-          </section>
-        )}
-
-        {isFocusMode ? null : (
           <section className="ui-panel-soft rounded p-3">
             <SearchInput onSelectUid={(nextUid) => navigate(`/read/${nextUid}`)} />
           </section>
         )}
-
-        {!isFocusMode && resumePosition !== null ? (
-          <section className="ui-panel-soft rounded p-3 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="min-w-0 flex-1">Resume where you left off?</span>
-              <button
-                className="ui-button rounded px-2 py-1"
-                type="button"
-                onClick={() => {
-                  rsvp.seekTo(resumePosition);
-                  clearResume();
-                }}
-              >
-                Resume
-              </button>
-              <button className="ui-button rounded px-2 py-1" type="button" onClick={clearResume}>
-                Start over
-              </button>
-            </div>
-          </section>
-        ) : null}
 
         <RSVPDisplay
           chunk={rsvp.currentChunk}
@@ -331,9 +418,6 @@ function ReaderLoaded({
               onFontSizeChange={(size) => setPreferences((state) => ({ ...state, fontSize: size }))}
               onFontFamilyChange={(family) =>
                 setPreferences((state) => ({ ...state, fontFamily: family }))
-              }
-              onFocusModeToggle={() =>
-                setPreferences((state) => ({ ...state, focusMode: !state.focusMode }))
               }
             />
           </>

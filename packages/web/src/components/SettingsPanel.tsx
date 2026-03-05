@@ -5,7 +5,6 @@ interface SettingsPanelProps {
   onThemeToggle: () => void;
   onFontSizeChange: (size: StoredPreferences['fontSize']) => void;
   onFontFamilyChange: (family: StoredPreferences['fontFamily']) => void;
-  onFocusModeToggle: () => void;
 }
 
 export function SettingsPanel({
@@ -13,21 +12,11 @@ export function SettingsPanel({
   onThemeToggle,
   onFontSizeChange,
   onFontFamilyChange,
-  onFocusModeToggle,
 }: SettingsPanelProps) {
   return (
     <details className="ui-panel rounded p-3">
       <summary className="cursor-pointer text-sm font-semibold">Settings</summary>
       <div className="mt-3 grid gap-3">
-        <button
-          aria-label="Toggle focus mode"
-          className="ui-button rounded px-3 py-2"
-          type="button"
-          onClick={onFocusModeToggle}
-        >
-          Focus mode: {preferences.focusMode ? 'on' : 'off'}
-        </button>
-
         <button
           aria-label="Toggle dark mode"
           className="ui-button rounded px-3 py-2"
@@ -62,7 +51,15 @@ export function SettingsPanel({
           ).map((family) => (
             <button
               key={family.value}
-              className={`rounded px-2 py-1 ${preferences.fontFamily === family.value ? 'ui-button-active' : 'ui-button-inactive'}`}
+              className={`rounded px-2 py-1 ${
+                preferences.fontFamily === family.value ? 'ui-button-active' : 'ui-button-inactive'
+              } ${
+                family.value === 'serif'
+                  ? 'reader-font-serif'
+                  : family.value === 'mono'
+                    ? 'reader-font-mono'
+                    : 'reader-font-dyslexic'
+              }`}
               type="button"
               onClick={() => onFontFamilyChange(family.value)}
             >
