@@ -7,6 +7,7 @@ coverage
 .DS_Store
 .env
 .env.*
+.env.local
 packages/worker/.wrangler
 packages/worker/dist
 packages/web/dist
