@@ -29,22 +29,39 @@ pnpm exec wrangler pages project create suttaspeed
 
 Build output directory: `packages/web/dist`
 
-## 4. DNS/custom domain automation
+## 4. One-time DNS/custom domain setup (local)
 
 One-time prerequisite:
 1. Add/verify zone for `suttaspeed.com` and point registrar nameservers to Cloudflare.
 
-After that, CI handles the rest on every `main` deploy:
-1. Worker custom domain:
-   - `api.suttaspeed.com` -> `palispeedread-worker` (from `wrangler.toml`)
-2. Pages custom domains:
-   - `suttaspeed.com`
-   - `www.suttaspeed.com`
+Worker custom domain is configured by deploy:
+- `api.suttaspeed.com` -> `palispeedread-worker` (from `wrangler.toml`)
 
-Required token scopes for `CF_API_TOKEN`:
+Run once locally to attach Pages domains:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $CF_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/pages/projects/suttaspeed/domains" \
+  --data '{"name":"suttaspeed.com"}'
+
+curl -X POST \
+  -H "Authorization: Bearer $CF_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/pages/projects/suttaspeed/domains" \
+  --data '{"name":"www.suttaspeed.com"}'
+```
+
+Then create DNS records once:
+- `CNAME suttaspeed.com -> suttaspeed.pages.dev` (proxied)
+- `CNAME www.suttaspeed.com -> suttaspeed.pages.dev` (proxied)
+
+Required token scopes for local API setup:
 - Account: `Cloudflare Pages:Edit`
 - Account: `Workers Scripts:Edit`
 - Zone: `Zone:Read`
+- Zone: `DNS:Edit`
 
 ## 5. Build web against API domain
 
