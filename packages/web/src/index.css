@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&display=swap');
 
 @font-face {
   font-family: 'OpenDyslexic';
@@ -54,6 +55,12 @@ body {
   background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: 'Literata', 'EB Garamond', Georgia, serif;
+}
+
+.brand-wordmark {
+  font-family: 'Chakra Petch', 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-variant-ligatures: none;
 }
 
 .reader-font-serif {
