@@ -21,7 +21,7 @@ describe('useRSVP', () => {
   });
 
   it('starts paused and supports playback controls', () => {
-    const { result } = renderHook(() => useRSVP(tokens, 600, 1));
+    const { result } = renderHook(() => useRSVP(tokens, 600, 1, 'normal'));
 
     expect(result.current.isPlaying).toBe(false);
     expect(result.current.currentIndex).toBe(0);
@@ -52,7 +52,7 @@ describe('useRSVP', () => {
 
   it('auto-pauses at end', () => {
     const oneToken: Token[] = [tokens[0]];
-    const { result } = renderHook(() => useRSVP(oneToken, 800, 1));
+    const { result } = renderHook(() => useRSVP(oneToken, 800, 1, 'normal'));
 
     act(() => result.current.play());
     act(() => {
@@ -65,19 +65,32 @@ describe('useRSVP', () => {
 
   it('preserves reading position across chunk size changes', () => {
     const { result, rerender } = renderHook(
-      ({ chunkSize }) => useRSVP(tokens, 300, chunkSize),
-      { initialProps: { chunkSize: 1 } },
+      ({ chunkSize, fontSize }) => useRSVP(tokens, 300, chunkSize, fontSize),
+      { initialProps: { chunkSize: 1, fontSize: 'normal' as const } },
     );
 
     act(() => result.current.seekTo(2));
     expect(result.current.currentChunk?.some((token) => token.index === 2)).toBe(true);
 
-    rerender({ chunkSize: 2 });
+    rerender({ chunkSize: 2, fontSize: 'normal' });
     expect(result.current.currentChunk?.some((token) => token.index === 2)).toBe(true);
   });
 
+  it('preserves reading position across font size changes', () => {
+    const { result, rerender } = renderHook(
+      ({ fontSize }: { fontSize: 'normal' | 'xlarge' }) => useRSVP(tokens, 300, 4, fontSize),
+      { initialProps: { fontSize: 'normal' as 'normal' | 'xlarge' } },
+    );
+
+    act(() => result.current.seekTo(1));
+    expect(result.current.currentChunk?.some((token) => token.index === 3)).toBe(true);
+
+    rerender({ fontSize: 'xlarge' });
+    expect(result.current.currentChunk?.some((token) => token.index === 3)).toBe(true);
+  });
+
   it('computes progress and remaining time', () => {
-    const { result } = renderHook(() => useRSVP(tokens, 300, 1));
+    const { result } = renderHook(() => useRSVP(tokens, 300, 1, 'normal'));
     expect(result.current.progress).toBe(0);
     expect(result.current.timeRemainingMs).toBeGreaterThan(0);
 

@@ -1,28 +1,90 @@
-import type { Token } from './types';
+import { CHUNK_CHAR_BUDGET } from './constants';
+import type { FontSize, Token } from './types';
 
-export function buildChunks(tokens: Token[], chunkSize: number): Token[][] {
+export interface BuildChunksOptions {
+  chunkSize: number;
+  fontSize: FontSize;
+}
+
+const SENTENCE_FINAL_PUNCTUATION = /[.!?…]/u;
+const CLAUSE_FINAL_PUNCTUATION = /[,;:—–]/u;
+
+function isSentenceFinalPunctuation(punctuation: string): boolean {
+  return SENTENCE_FINAL_PUNCTUATION.test(punctuation);
+}
+
+function isClauseFinalPunctuation(punctuation: string): boolean {
+  return !isSentenceFinalPunctuation(punctuation) && CLAUSE_FINAL_PUNCTUATION.test(punctuation);
+}
+
+function getChunkCharBudget(fontSize: FontSize): number {
+  return CHUNK_CHAR_BUDGET[fontSize];
+}
+
+function getVisibleChunkLength(tokens: Token[]): number {
+  if (tokens.length === 0) {
+    return 0;
+  }
+
+  return tokens.reduce((total, token, index) => {
+    const spaceLength = index > 0 ? 1 : 0;
+    return total + spaceLength + [...token.word].length + [...token.trailingPunctuation].length;
+  }, 0);
+}
+
+function shouldCloseAfterToken(token: Token, chunkLength: number): boolean {
+  if (isSentenceFinalPunctuation(token.trailingPunctuation)) {
+    return true;
+  }
+
+  return chunkLength >= 2 && isClauseFinalPunctuation(token.trailingPunctuation);
+}
+
+export function buildChunks(tokens: Token[], options: BuildChunksOptions): Token[][] {
+  const { chunkSize, fontSize } = options;
   if (!tokens.length || chunkSize < 1) {
     return [];
   }
 
   const chunks: Token[][] = [];
-  let currentChunk: Token[] = [];
+  const charBudget = getChunkCharBudget(fontSize);
+  let cursor = 0;
 
-  for (const token of tokens) {
-    if (token.isParagraphStart && currentChunk.length > 0) {
+  while (cursor < tokens.length) {
+    const currentChunk: Token[] = [tokens[cursor]];
+    cursor += 1;
+
+    if (shouldCloseAfterToken(currentChunk[0], currentChunk.length)) {
       chunks.push(currentChunk);
-      currentChunk = [];
+      continue;
     }
 
-    currentChunk.push(token);
+    while (cursor < tokens.length) {
+      const nextToken = tokens[cursor];
+      if (nextToken.isParagraphStart) {
+        break;
+      }
+      if (currentChunk.length >= chunkSize) {
+        break;
+      }
 
-    if (currentChunk.length === chunkSize) {
-      chunks.push(currentChunk);
-      currentChunk = [];
+      const projectedLength =
+        getVisibleChunkLength(currentChunk) +
+        1 +
+        [...nextToken.word].length +
+        [...nextToken.trailingPunctuation].length;
+
+      if (projectedLength > charBudget) {
+        break;
+      }
+
+      currentChunk.push(nextToken);
+      cursor += 1;
+
+      if (shouldCloseAfterToken(nextToken, currentChunk.length)) {
+        break;
+      }
     }
-  }
-
-  if (currentChunk.length > 0) {
     chunks.push(currentChunk);
   }
 

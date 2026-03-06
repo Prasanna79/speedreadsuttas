@@ -1,26 +1,23 @@
 import { getOrpIndex, type Token } from '@palispeedread/shared';
 
 /**
- * Compute the [before, orpChar, after] split for a chunk using a specific anchor index.
+ * Compute the [before, orpChar, after] split for a chunk using a specific token/char anchor.
  */
-function splitAtAnchor(chunk: Token[], anchorIdx: number): [string, string, string] {
-  const anchor = chunk[anchorIdx];
+function splitAtLocation(chunk: Token[], tokenIdx: number, charIdx: number): [string, string, string] {
+  const anchor = chunk[tokenIdx];
   const chars = [...anchor.word];
-  const orpIndex = getOrpIndex(chars.length);
-  const orpChar = chars[orpIndex] ?? '';
+  const orpChar = chars[charIdx] ?? '';
 
-  // Left column: all words before anchor + start of anchor word up to ORP
   let before = '';
-  for (let i = 0; i < anchorIdx; i++) {
+  for (let i = 0; i < tokenIdx; i++) {
     if (i > 0) before += ' ';
     before += chunk[i].word + chunk[i].trailingPunctuation;
   }
-  if (anchorIdx > 0) before += ' ';
-  before += chars.slice(0, orpIndex).join('');
+  if (tokenIdx > 0) before += ' ';
+  before += chars.slice(0, charIdx).join('');
 
-  // Right column: rest of anchor word + its punct + words after anchor
-  let after = chars.slice(orpIndex + 1).join('') + anchor.trailingPunctuation;
-  for (let i = anchorIdx + 1; i < chunk.length; i++) {
+  let after = chars.slice(charIdx + 1).join('') + anchor.trailingPunctuation;
+  for (let i = tokenIdx + 1; i < chunk.length; i++) {
     after += ' ' + chunk[i].word + chunk[i].trailingPunctuation;
   }
 
@@ -28,26 +25,44 @@ function splitAtAnchor(chunk: Token[], anchorIdx: number): [string, string, stri
 }
 
 /**
- * Split a chunk into three parts around the best-balanced anchor word's ORP.
- *
- * Tries every word as a candidate anchor and picks the one that minimizes
- * |before.length - after.length|. Ties are broken by preferring the earlier
- * (lower) index, giving a slight left-read bias.
+ * Split a chunk into three parts around the midpoint-nearest word character.
  */
 export function splitChunkAtOrp(chunk: Token[]): [string, string, string] {
   if (chunk.length === 0) return ['', '', ''];
+  if (chunk.length === 1) {
+    const chars = [...chunk[0].word];
+    return splitAtLocation(chunk, 0, getOrpIndex(chars.length));
+  }
 
-  let bestIdx = 0;
-  let bestImbalance = Infinity;
+  const candidates: Array<{ tokenIdx: number; charIdx: number; absoluteIdx: number }> = [];
+  let absoluteIdx = 0;
 
-  for (let i = 0; i < chunk.length; i++) {
-    const [before, , after] = splitAtAnchor(chunk, i);
-    const imbalance = Math.abs(before.length - after.length);
-    if (imbalance < bestImbalance) {
-      bestImbalance = imbalance;
-      bestIdx = i;
+  for (let tokenIdx = 0; tokenIdx < chunk.length; tokenIdx++) {
+    if (tokenIdx > 0) {
+      absoluteIdx += 1;
+    }
+
+    const token = chunk[tokenIdx];
+    const chars = [...token.word];
+    for (let charIdx = 0; charIdx < chars.length; charIdx++) {
+      candidates.push({ tokenIdx, charIdx, absoluteIdx });
+      absoluteIdx += 1;
+    }
+
+    absoluteIdx += [...token.trailingPunctuation].length;
+  }
+
+  const midpoint = Math.floor(absoluteIdx / 2);
+  let bestCandidate = candidates[0];
+  let bestDistance = Math.abs(bestCandidate.absoluteIdx - midpoint);
+
+  for (const candidate of candidates.slice(1)) {
+    const distance = Math.abs(candidate.absoluteIdx - midpoint);
+    if (distance < bestDistance) {
+      bestCandidate = candidate;
+      bestDistance = distance;
     }
   }
 
-  return splitAtAnchor(chunk, bestIdx);
+  return splitAtLocation(chunk, bestCandidate.tokenIdx, bestCandidate.charIdx);
 }

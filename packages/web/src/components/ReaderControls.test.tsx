@@ -33,15 +33,17 @@ describe('ReaderControls', () => {
     expect(handlers.onWpmChange).toHaveBeenCalledWith(300);
   });
 
-  it('renders compact dock mode without advanced controls', () => {
+  it('renders compact dock mode with optional chunk controls', () => {
     const onWpmChange = vi.fn();
+    const onChunkSizeChange = vi.fn();
     render(
       <ReaderControls
         chunkSize={2}
         compact
         isPlaying
+        showChunkControlsInCompact
         wpm={250}
-        onChunkSizeChange={vi.fn()}
+        onChunkSizeChange={onChunkSizeChange}
         onRestart={vi.fn()}
         onSkipBackward={vi.fn()}
         onSkipForward={vi.fn()}
@@ -52,11 +54,13 @@ describe('ReaderControls', () => {
 
     expect(screen.getByRole('button', { name: 'Play or pause' })).toHaveTextContent('Pause');
     expect(screen.queryByLabelText('WPM slider')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Chunk 1' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chunk 1' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Increase speed' }));
     fireEvent.click(screen.getByRole('button', { name: 'Decrease speed' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chunk 4' }));
     expect(onWpmChange).toHaveBeenNthCalledWith(1, 275);
     expect(onWpmChange).toHaveBeenNthCalledWith(2, 225);
+    expect(onChunkSizeChange).toHaveBeenCalledWith(4);
   });
 });

@@ -1,4 +1,4 @@
-import { buildChunks, calculateChunkDelay, type Token } from '@palispeedread/shared';
+import { buildChunks, calculateChunkDelay, type FontSize, type Token } from '@palispeedread/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const clampIndex = (index: number, total: number): number => {
@@ -24,16 +24,25 @@ export interface RSVPState {
   seekTo: (index: number) => void;
 }
 
-export function useRSVP(tokens: Token[], wpm: number, chunkSize: number): RSVPState {
-  const chunks = useMemo(() => buildChunks(tokens, chunkSize), [tokens, chunkSize]);
+export function useRSVP(
+  tokens: Token[],
+  wpm: number,
+  chunkSize: number,
+  fontSize: FontSize,
+): RSVPState {
+  const chunks = useMemo(
+    () => buildChunks(tokens, { chunkSize, fontSize }),
+    [tokens, chunkSize, fontSize],
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const timerRef = useRef<number | null>(null);
   const activeTokenIndexRef = useRef(0);
-  const previousChunkSizeRef = useRef(chunkSize);
+  const previousChunkConfigRef = useRef(`${chunkSize}:${fontSize}`);
 
   useEffect(() => {
-    if (previousChunkSizeRef.current === chunkSize) {
+    const nextChunkConfig = `${chunkSize}:${fontSize}`;
+    if (previousChunkConfigRef.current === nextChunkConfig) {
       return;
     }
 
@@ -44,8 +53,8 @@ export function useRSVP(tokens: Token[], wpm: number, chunkSize: number): RSVPSt
       );
       return nextIndex >= 0 ? nextIndex : 0;
     });
-    previousChunkSizeRef.current = chunkSize;
-  }, [chunkSize, chunks]);
+    previousChunkConfigRef.current = nextChunkConfig;
+  }, [chunkSize, chunks, fontSize]);
 
   useEffect(() => {
     setCurrentIndex((previous) => clampIndex(previous, chunks.length));

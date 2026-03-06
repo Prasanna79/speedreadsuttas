@@ -8,17 +8,35 @@ interface RSVPDisplayProps {
   fontFamily: 'serif' | 'mono' | 'openDyslexic';
 }
 
-const fontSizeClassMap = {
-  normal: 'text-4xl',
-  large: 'text-5xl',
-  xlarge: 'text-6xl',
-};
-
 const fontFamilyClassMap = {
   serif: 'reader-font-serif',
   mono: 'reader-font-mono',
   openDyslexic: 'reader-font-dyslexic',
 };
+
+const fontSizeClassMap = {
+  serif: {
+    normal: 'text-4xl',
+    large: 'text-5xl',
+    xlarge: 'text-6xl',
+  },
+  mono: {
+    normal: 'text-3xl',
+    large: 'text-4xl',
+    xlarge: 'text-5xl',
+  },
+  openDyslexic: {
+    normal: 'text-3xl',
+    large: 'text-4xl',
+    xlarge: 'text-5xl',
+  },
+} as const;
+
+const familyTuningClassMap = {
+  serif: '',
+  mono: 'tracking-tight',
+  openDyslexic: 'leading-snug',
+} as const;
 
 export function RSVPDisplay({ chunk, fontSize, fontFamily }: RSVPDisplayProps) {
   if (!chunk || chunk.length === 0) {
@@ -39,7 +57,7 @@ export function RSVPDisplay({ chunk, fontSize, fontFamily }: RSVPDisplayProps) {
       {/* 3-column grid: [1fr auto 1fr] anchors ORP at horizontal center */}
       <div
         data-testid="orp-grid"
-        className={`grid w-full grid-cols-[1fr_auto_1fr] ${fontFamilyClassMap[fontFamily]} leading-tight [font-variant-numeric:lining-nums_tabular-nums] ${fontSizeClassMap[fontSize]}`}
+        className={`grid w-full grid-cols-[1fr_auto_1fr] ${fontFamilyClassMap[fontFamily]} ${familyTuningClassMap[fontFamily]} leading-tight [font-variant-numeric:lining-nums_tabular-nums] ${fontSizeClassMap[fontFamily][fontSize]}`}
       >
         <span data-testid="orp-before" className="text-right whitespace-pre">
           {before}

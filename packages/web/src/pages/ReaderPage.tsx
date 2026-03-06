@@ -214,7 +214,7 @@ function ReaderLoaded({
     ? 'mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-[calc(7rem+env(safe-area-inset-bottom))]'
     : 'mx-auto grid min-h-screen w-full max-w-4xl gap-6 px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:px-6 md:py-8 md:pb-8';
 
-  const rsvp = useRSVP(tokens, preferences.wpm, preferences.chunkSize);
+  const rsvp = useRSVP(tokens, preferences.wpm, preferences.chunkSize, preferences.fontSize);
   const seekTo = rsvp.seekTo;
   const { resumePosition } = useLastRead({
     uid,
@@ -282,6 +282,7 @@ function ReaderLoaded({
         <button
           aria-label="Exit focus mode"
           className="ui-button fixed top-4 right-4 z-40 rounded px-3 py-2 text-sm"
+          title="Exit focus mode"
           type="button"
           onClick={() => setPreferences((state) => ({ ...state, focusMode: false }))}
         >
@@ -298,6 +299,7 @@ function ReaderLoaded({
               <button
                 aria-label="Enter focus mode"
                 className="ui-button rounded px-2 py-1"
+                title="Enter focus mode"
                 type="button"
                 onClick={() => setPreferences((state) => ({ ...state, focusMode: true }))}
               >
@@ -446,6 +448,7 @@ function ReaderLoaded({
           chunkSize={preferences.chunkSize}
           compact
           isPlaying={rsvp.isPlaying}
+          showChunkControlsInCompact
           wpm={preferences.wpm}
           onChunkSizeChange={(value) => setPreferences((state) => ({ ...state, chunkSize: value }))}
           onRestart={rsvp.restart}

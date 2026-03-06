@@ -288,3 +288,11 @@ Exit criteria:
 2. Donation processing in-app.
 3. Advanced analytics dashboard.
 4. Full content management or editorial tooling.
+
+## 17. UI Notes Status (Updated 2026-03-06)
+
+1. Done: fullscreen icon now has hover tooltip text (`Enter focus mode` / `Exit focus mode`).
+2. Done: chunk-size controls are now available in compact floating controls (mobile + focus mode).
+3. Done: settings label renamed from `Font size` to `Size`.
+4. Done: settings label renamed from `Font family` to `Font`.
+5. Done: settings are now always visible compact controls (no dropdown block).

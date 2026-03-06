@@ -1,4 +1,95 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function mockMn1ReaderRoutes(page: Page) {
+  await page.route('**/api/v1/sutta/mn1', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid: 'mn1',
+        collection: 'mn',
+        title: 'MN1 Mock',
+        translations: [
+          {
+            lang: 'en',
+            langName: 'English',
+            author: 'sujato',
+            authorName: 'Bhikkhu Sujato',
+            isRoot: false,
+            publication: 'SuttaCentral',
+            licence: 'CC0 1.0',
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/sutta/mn1/text/en/sujato', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid: 'mn1',
+        lang: 'en',
+        author: 'sujato',
+        segments: [
+          { id: 'mn1:0.1', text: 'evam me sutam' },
+          { id: 'mn1:1.1', text: 'eka samayam' },
+          { id: 'mn1:1.2', text: 'bhagava viharati' },
+        ],
+      }),
+    });
+  });
+}
+
+async function mockReaderRoute(
+  page: Page,
+  {
+    uid,
+    title,
+    segments,
+  }: {
+    uid: string;
+    title: string;
+    segments: Array<{ id: string; text: string }>;
+  },
+) {
+  await page.route(`**/api/v1/sutta/${uid}`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid,
+        collection: 'mn',
+        title,
+        translations: [
+          {
+            lang: 'en',
+            langName: 'English',
+            author: 'sujato',
+            authorName: 'Bhikkhu Sujato',
+            isRoot: false,
+            publication: 'SuttaCentral',
+            licence: 'CC0 1.0',
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.route(`**/api/v1/sutta/${uid}/text/en/sujato`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        uid,
+        lang: 'en',
+        author: 'sujato',
+        segments,
+      }),
+    });
+  });
+}
 
 test('home page loads and search input is visible', async ({ page }) => {
   await page.goto('/');
@@ -47,10 +138,9 @@ test('mobile reader uses search icon instead of inline search field', async ({ p
 });
 
 test('theme toggle persists on reader page', async ({ page }) => {
+  await mockMn1ReaderRoutes(page);
   await page.goto('/read/mn1/en/sujato');
   await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
-
-  await page.getByText('Settings').click();
 
   const isDarkBefore = await page.evaluate(() =>
     document.documentElement.classList.contains('dark'),
@@ -69,6 +159,7 @@ test('theme toggle persists on reader page', async ({ page }) => {
 });
 
 test('mobile xlarge keeps playback controls inside viewport', async ({ page }) => {
+  await mockMn1ReaderRoutes(page);
   await page.setViewportSize({ width: 360, height: 640 });
   await page.addInitScript(() => {
     window.localStorage.setItem(
@@ -89,6 +180,8 @@ test('mobile xlarge keeps playback controls inside viewport', async ({ page }) =
 
   const playPause = page.getByRole('button', { name: 'Play or pause' });
   await expect(playPause).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Chunk 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Chunk 4' })).toBeVisible();
   const box = await playPause.boundingBox();
   const viewport = page.viewportSize();
 
@@ -103,6 +196,7 @@ test('mobile xlarge keeps playback controls inside viewport', async ({ page }) =
 });
 
 test('focus mode hides global chrome and can be exited', async ({ page }) => {
+  await mockMn1ReaderRoutes(page);
   await page.goto('/read/mn1/en/sujato');
   await expect(page.getByRole('heading', { name: /MN1/i })).toBeVisible({ timeout: 15_000 });
 
@@ -111,6 +205,7 @@ test('focus mode hides global chrome and can be exited', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Exit focus mode' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play or pause' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Skip forward' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Chunk 1' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'About' })).toBeHidden();
   await expect(page.getByRole('link', { name: 'Donate' })).toBeHidden();
 
@@ -478,4 +573,113 @@ test('reader tokenization splits em-dash joins and preserves segment order', asy
 
   await skipForward.click();
   await expect(display).toContainText('late');
+});
+
+test('reader stops chunk at sentence punctuation', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 4,
+        theme: 'light',
+        fontSize: 'normal',
+        fontFamily: 'serif',
+        focusMode: false,
+      }),
+    );
+  });
+
+  await mockReaderRoute(page, {
+    uid: 'mn20',
+    title: 'Sentence Stop Mock',
+    segments: [{ id: 'mn20:1.1', text: 'I have heard. Thus have I.' }],
+  });
+
+  await page.goto('/read/mn20/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN20/i })).toBeVisible({ timeout: 15_000 });
+
+  const display = page.locator('section[aria-live="polite"]');
+  await expect(display).toContainText('heard.');
+  await expect(display).not.toContainText('Thus');
+
+  await page.getByRole('button', { name: 'Skip forward' }).click();
+  await expect(display).toContainText('Thus have I.');
+});
+
+test('reader uses chunk midpoint ORP for multi-word chunks', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 2,
+        theme: 'light',
+        fontSize: 'normal',
+        fontFamily: 'serif',
+        focusMode: false,
+      }),
+    );
+  });
+
+  await mockReaderRoute(page, {
+    uid: 'mn21',
+    title: 'ORP Midpoint Mock',
+    segments: [{ id: 'mn21:1.1', text: 'the Buddha' }],
+  });
+
+  await page.goto('/read/mn21/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN21/i })).toBeVisible({ timeout: 15_000 });
+
+  await expect(page.getByTestId('orp-before')).toHaveText('the B');
+  await expect(page.getByTestId('orp-char')).toHaveText('u');
+  await expect(page.getByTestId('orp-after')).toHaveText('ddha');
+});
+
+test('xlarge font uses shorter chunks than normal font for the same source text', async ({ page }) => {
+  const payload = {
+    uid: 'mn22',
+    title: 'Chunk Density Mock',
+    segments: [{ id: 'mn22:1.1', text: 'dependent origination is deep' }],
+  };
+  await mockReaderRoute(page, payload);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 4,
+        theme: 'light',
+        fontSize: 'normal',
+        fontFamily: 'serif',
+        focusMode: false,
+      }),
+    );
+  });
+
+  await page.goto('/read/mn22/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN22/i })).toBeVisible({ timeout: 15_000 });
+  const display = page.locator('section[aria-live="polite"]');
+  await expect(display).toContainText('dependent');
+  await expect(display).toContainText('origination');
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'palispeedread:preferences',
+      JSON.stringify({
+        wpm: 250,
+        chunkSize: 4,
+        theme: 'light',
+        fontSize: 'xlarge',
+        fontFamily: 'serif',
+        focusMode: false,
+      }),
+    );
+  });
+
+  await page.goto('/read/mn22/en/sujato');
+  await expect(page.getByRole('heading', { name: /MN22/i })).toBeVisible({ timeout: 15_000 });
+  await expect(display).toContainText('dependent');
+  await expect(display).not.toContainText('origination');
 });

@@ -128,7 +128,7 @@ describe('splitChunkAtOrp', () => {
       // A1: before "the Bu"(6), after "dha"(3) → imbalance 3 ← wins
       expect(
         splitChunkAtOrp([tok('the', { index: 0 }), tok('Buddha', { index: 1 })]),
-      ).toEqual(['the Bu', 'd', 'dha']);
+      ).toEqual(['the B', 'u', 'ddha']);
     });
 
     it('"I" + "know" — anchor 1 better balanced', () => {
@@ -147,7 +147,7 @@ describe('splitChunkAtOrp', () => {
           tok('concentration', { index: 0 }),
           tok('is', { index: 1 }),
         ]),
-      ).toEqual(['con', 'c', 'entration is']);
+      ).toEqual(['concentr', 'a', 'tion is']);
     });
 
     it('trailing punct on first word — anchor 0', () => {
@@ -158,7 +158,7 @@ describe('splitChunkAtOrp', () => {
           tok('heard', { index: 0, trailingPunctuation: '.' }),
           tok('So', { index: 1 }),
         ]),
-      ).toEqual(['h', 'e', 'ard. So']);
+      ).toEqual(['hear', 'd', '. So']);
     });
 
     it('trailing punct on second word — tie broken by earlier index', () => {
@@ -207,7 +207,7 @@ describe('splitChunkAtOrp', () => {
           tok('great', { index: 1 }),
           tok('king', { index: 2 }),
         ]),
-      ).toEqual(['the g', 'r', 'eat king']);
+      ).toEqual(['the gre', 'a', 't king']);
     });
 
     it('"understanding" + "of" + "the" — anchor on "of" (imbalance 11)', () => {
@@ -218,7 +218,7 @@ describe('splitChunkAtOrp', () => {
           tok('of', { index: 1 }),
           tok('the', { index: 2 }),
         ]),
-      ).toEqual(['understanding o', 'f', ' the']);
+      ).toEqual(['understand', 'i', 'ng of the']);
     });
 
     it('punct on anchor word (middle)', () => {
@@ -228,7 +228,7 @@ describe('splitChunkAtOrp', () => {
           tok('I', { index: 1, trailingPunctuation: ',' }),
           tok('have', { index: 2 }),
         ]),
-      ).toEqual(['So ', 'I', ', have']);
+      ).toEqual(['So I, ', 'h', 'ave']);
     });
 
     it('punct on last word', () => {
@@ -238,7 +238,7 @@ describe('splitChunkAtOrp', () => {
           tok('I', { index: 1 }),
           tok('have', { index: 2, trailingPunctuation: '.' }),
         ]),
-      ).toEqual(['So ', 'I', ' have.']);
+      ).toEqual(['So I ', 'h', 'ave.']);
     });
 
     it('punct on first word (before anchor)', () => {
@@ -264,7 +264,7 @@ describe('splitChunkAtOrp', () => {
           tok('brown', { index: 2 }),
           tok('fox', { index: 3 }),
         ]),
-      ).toEqual(['the quick b', 'r', 'own fox']);
+      ).toEqual(['the quic', 'k', ' brown fox']);
     });
 
     it('"I" + "am" + "a" + "man" — anchor on "a"', () => {
@@ -288,7 +288,7 @@ describe('splitChunkAtOrp', () => {
           tok('calm', { index: 2 }),
           tok('mind', { index: 3 }),
         ]),
-      ).toEqual(['with deep c', 'a', 'lm mind']);
+      ).toEqual(['with dee', 'p', ' calm mind']);
     });
 
     it('Pāli: "Evaṁ" + "me" + "sutaṁ" + "ekaṁ" — anchor on "sutaṁ"', () => {
@@ -312,7 +312,7 @@ describe('splitChunkAtOrp', () => {
           tok('have', { index: 2 }),
           tok('heard', { index: 3, trailingPunctuation: '.' }),
         ]),
-      ).toEqual(['So, I h', 'a', 've heard.']);
+      ).toEqual(['So, I ha', 'v', 'e heard.']);
     });
 
     it('screenshot: "things." + "Listen" + "and" + "apply" — anchor on "Listen"', () => {
@@ -324,7 +324,7 @@ describe('splitChunkAtOrp', () => {
           tok('and', { index: 2 }),
           tok('apply', { index: 3 }),
         ]),
-      ).toEqual(['things. Li', 's', 'ten and apply']);
+      ).toEqual(['things. List', 'e', 'n and apply']);
     });
 
     it('screenshot: "Because" + "they" + "haven\'t" + "completely"', () => {
@@ -348,7 +348,7 @@ describe('splitChunkAtOrp', () => {
           tok('mendicants', { index: 2, trailingPunctuation: ',' }),
           tok('\u201CMendicants!\u201D', { index: 3 }),
         ]),
-      ).toEqual(['addressed the men', 'd', 'icants, \u201CMendicants!\u201D']);
+      ).toEqual(['addressed the mendi', 'c', 'ants, \u201CMendicants!\u201D']);
     });
 
     it('screenshot: "\u201CTake" + "an" + "unlearned" + "ordinary"', () => {
@@ -360,7 +360,7 @@ describe('splitChunkAtOrp', () => {
           tok('unlearned', { index: 2 }),
           tok('ordinary', { index: 3 }),
         ]),
-      ).toEqual(['\u201CTake an un', 'l', 'earned ordinary']);
+      ).toEqual(['\u201CTake an unle', 'a', 'rned ordinary']);
     });
 
     it('long first two words + short last two — anchor shifts left', () => {
@@ -373,7 +373,7 @@ describe('splitChunkAtOrp', () => {
           tok('of', { index: 2 }),
           tok('it', { index: 3 }),
         ]),
-      ).toEqual(['extraordinary cir', 'c', 'umstances of it']);
+      ).toEqual(['extraordinary ci', 'r', 'cumstances of it']);
     });
   });
 
@@ -445,7 +445,7 @@ describe('splitChunkAtOrp', () => {
           tok('the', { index: 0 }),
           tok('end', { index: 1 }),
         ]),
-      ).toEqual(['t', 'h', 'e end']);
+      ).toEqual(['th', 'e', ' end']);
     });
   });
 });
@@ -501,6 +501,18 @@ describe('RSVPDisplay', () => {
       <RSVPDisplay chunk={[tok('test')]} fontFamily="serif" fontSize="xlarge" />,
     );
     expect(screen.getByTestId('orp-grid')).toHaveClass('text-6xl');
+  });
+
+  it('uses smaller size scale for mono and openDyslexic families', () => {
+    const { rerender } = render(
+      <RSVPDisplay chunk={[tok('test')]} fontFamily="mono" fontSize="xlarge" />,
+    );
+    expect(screen.getByTestId('orp-grid')).toHaveClass('text-5xl');
+    expect(screen.getByTestId('orp-grid')).not.toHaveClass('text-6xl');
+
+    rerender(<RSVPDisplay chunk={[tok('test')]} fontFamily="openDyslexic" fontSize="large" />);
+    expect(screen.getByTestId('orp-grid')).toHaveClass('text-4xl');
+    expect(screen.getByTestId('orp-grid')).not.toHaveClass('text-5xl');
   });
 
   it('applies font family class', () => {

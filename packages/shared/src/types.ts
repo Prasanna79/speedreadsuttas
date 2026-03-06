@@ -3,6 +3,9 @@ export interface Segment {
   text: string;
 }
 
+export type FontSize = 'normal' | 'large' | 'xlarge';
+export type FontFamily = 'serif' | 'mono' | 'openDyslexic';
+
 export interface Token {
   word: string;
   index: number;
@@ -33,8 +36,8 @@ export interface StoredPreferences {
   wpm: number;
   chunkSize: number;
   theme: 'light' | 'dark';
-  fontSize: 'normal' | 'large' | 'xlarge';
-  fontFamily: 'serif' | 'mono' | 'openDyslexic';
+  fontSize: FontSize;
+  fontFamily: FontFamily;
   focusMode: boolean;
 }
 

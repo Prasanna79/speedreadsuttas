@@ -14,24 +14,23 @@ export function SettingsPanel({
   onFontFamilyChange,
 }: SettingsPanelProps) {
   return (
-    <details className="ui-panel rounded p-3">
-      <summary className="cursor-pointer text-sm font-semibold">Settings</summary>
-      <div className="mt-3 grid gap-3">
+    <section aria-label="Reader settings" className="ui-panel rounded p-3">
+      <div className="grid gap-2">
         <button
           aria-label="Toggle dark mode"
-          className="ui-button rounded px-3 py-2"
+          className="ui-button w-fit rounded px-3 py-1 text-sm"
           type="button"
           onClick={onThemeToggle}
         >
-          Theme: {preferences.theme}
+          Theme: {preferences.theme === 'dark' ? 'Dark' : 'Light'}
         </button>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm ui-muted">Font size</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm ui-muted">Size</span>
           {(['normal', 'large', 'xlarge'] as const).map((size) => (
             <button
               key={size}
-              className={`rounded px-2 py-1 ${preferences.fontSize === size ? 'ui-button-active' : 'ui-button-inactive'}`}
+              className={`rounded px-2 py-0.5 text-sm ${preferences.fontSize === size ? 'ui-button-active' : 'ui-button-inactive'}`}
               type="button"
               onClick={() => onFontSizeChange(size)}
             >
@@ -41,7 +40,7 @@ export function SettingsPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm ui-muted">Font family</span>
+          <span className="text-sm ui-muted">Font</span>
           {(
             [
               { label: 'Serif', value: 'serif' },
@@ -51,7 +50,7 @@ export function SettingsPanel({
           ).map((family) => (
             <button
               key={family.value}
-              className={`rounded px-2 py-1 ${
+              className={`rounded px-2 py-0.5 text-sm ${
                 preferences.fontFamily === family.value ? 'ui-button-active' : 'ui-button-inactive'
               } ${
                 family.value === 'serif'
@@ -68,6 +67,6 @@ export function SettingsPanel({
           ))}
         </div>
       </div>
-    </details>
+    </section>
   );
 }

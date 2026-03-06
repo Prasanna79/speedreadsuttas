@@ -9,6 +9,7 @@ interface ReaderControlsProps {
   onChunkSizeChange: (value: number) => void;
   onRestart: () => void;
   compact?: boolean;
+  showChunkControlsInCompact?: boolean;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ export function ReaderControls({
   onChunkSizeChange,
   onRestart,
   compact = false,
+  showChunkControlsInCompact = false,
   className = '',
 }: ReaderControlsProps) {
   const containerClassName = compact
@@ -67,25 +69,43 @@ export function ReaderControls({
       </div>
 
       {compact ? (
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm ui-muted">Speed</span>
-          <button
-            aria-label="Decrease speed"
-            className="ui-button rounded px-2 py-1"
-            type="button"
-            onClick={() => onWpmChange(Math.max(100, wpm - 25))}
-          >
-            −
-          </button>
-          <span className="min-w-14 text-center text-sm font-medium">{`${wpm} WPM`}</span>
-          <button
-            aria-label="Increase speed"
-            className="ui-button rounded px-2 py-1"
-            type="button"
-            onClick={() => onWpmChange(Math.min(800, wpm + 25))}
-          >
-            +
-          </button>
+        <div className="grid gap-2">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm ui-muted">Speed</span>
+            <button
+              aria-label="Decrease speed"
+              className="ui-button rounded px-2 py-1"
+              type="button"
+              onClick={() => onWpmChange(Math.max(100, wpm - 25))}
+            >
+              −
+            </button>
+            <span className="min-w-14 text-center text-sm font-medium">{`${wpm} WPM`}</span>
+            <button
+              aria-label="Increase speed"
+              className="ui-button rounded px-2 py-1"
+              type="button"
+              onClick={() => onWpmChange(Math.min(800, wpm + 25))}
+            >
+              +
+            </button>
+          </div>
+          {showChunkControlsInCompact ? (
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              <span className="text-sm ui-muted">Chunk</span>
+              {[1, 2, 3, 4].map((value) => (
+                <button
+                  key={value}
+                  aria-label={`Chunk ${value}`}
+                  className={`rounded px-2 py-0.5 text-sm ${chunkSize === value ? 'ui-button-active' : 'ui-button-inactive'}`}
+                  type="button"
+                  onClick={() => onChunkSizeChange(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : (
         <>

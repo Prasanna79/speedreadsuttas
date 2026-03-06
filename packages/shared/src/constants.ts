@@ -5,6 +5,11 @@ export const WPM_STEP = 25;
 
 export const CHUNK_SIZE_DEFAULT = 1;
 export const CHUNK_SIZE_MAX = 4;
+export const CHUNK_CHAR_BUDGET = {
+  normal: 22,
+  large: 20,
+  xlarge: 18,
+} as const;
 
 export const PAUSE_SENTENCE = 2.5;
 export const PAUSE_ELLIPSIS = 3.0;
