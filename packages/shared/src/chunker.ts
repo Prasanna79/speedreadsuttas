@@ -22,10 +22,6 @@ function getChunkCharBudget(fontSize: FontSize): number {
 }
 
 function getVisibleChunkLength(tokens: Token[]): number {
-  if (tokens.length === 0) {
-    return 0;
-  }
-
   return tokens.reduce((total, token, index) => {
     const spaceLength = index > 0 ? 1 : 0;
     return total + spaceLength + [...token.word].length + [...token.trailingPunctuation].length;

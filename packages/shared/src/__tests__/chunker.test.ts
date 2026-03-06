@@ -123,6 +123,11 @@ describe('buildChunks', () => {
       ),
     ).toEqual([['dependent', 'origination'], ['is', 'deep']]);
     expect(
+      buildChunks(tokens, { chunkSize: 4, fontSize: 'large' }).map((chunk) =>
+        chunk.map((item) => item.word),
+      ),
+    ).toEqual([['dependent'], ['origination', 'is', 'deep']]);
+    expect(
       buildChunks(tokens, { chunkSize: 4, fontSize: 'xlarge' }).map((chunk) =>
         chunk.map((item) => item.word),
       ),
