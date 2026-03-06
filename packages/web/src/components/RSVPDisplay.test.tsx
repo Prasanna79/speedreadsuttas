@@ -158,57 +158,57 @@ describe('splitChunkAtOrp', () => {
     });
   });
 
-  // --- Group 4: Chunk size 3 ---
+  // --- Group 4: Chunk size 3 (anchor = word 2, index 1) ---
 
   describe('chunk size 3', () => {
-    it('"So" + "I" + "have" — mixed lengths', () => {
+    it('"So" + "I" + "have" — anchor on "I"', () => {
       expect(
         splitChunkAtOrp([
           tok('So', { index: 0 }),
           tok('I', { index: 1 }),
           tok('have', { index: 2 }),
         ]),
-      ).toEqual(['S', 'o', ' I have']);
+      ).toEqual(['So ', 'I', ' have']);
     });
 
-    it('"I" + "am" + "a" — all short, lopsided right', () => {
+    it('"I" + "am" + "a" — anchor on "am"', () => {
       expect(
         splitChunkAtOrp([
           tok('I', { index: 0 }),
           tok('am', { index: 1 }),
           tok('a', { index: 2 }),
         ]),
-      ).toEqual(['', 'I', ' am a']);
+      ).toEqual(['I a', 'm', ' a']);
     });
 
-    it('"the" + "great" + "king" — moderate lengths', () => {
+    it('"the" + "great" + "king" — anchor on "great"', () => {
       expect(
         splitChunkAtOrp([
           tok('the', { index: 0 }),
           tok('great', { index: 1 }),
           tok('king', { index: 2 }),
         ]),
-      ).toEqual(['t', 'h', 'e great king']);
+      ).toEqual(['the g', 'r', 'eat king']);
     });
 
-    it('"understanding" + "of" + "the" — long anchor', () => {
+    it('"understanding" + "of" + "the" — anchor on "of"', () => {
       expect(
         splitChunkAtOrp([
           tok('understanding', { index: 0 }),
           tok('of', { index: 1 }),
           tok('the', { index: 2 }),
         ]),
-      ).toEqual(['und', 'e', 'rstanding of the']);
+      ).toEqual(['understanding o', 'f', ' the']);
     });
 
-    it('punct on middle word', () => {
+    it('punct on anchor word (middle)', () => {
       expect(
         splitChunkAtOrp([
           tok('So', { index: 0 }),
           tok('I', { index: 1, trailingPunctuation: ',' }),
           tok('have', { index: 2 }),
         ]),
-      ).toEqual(['S', 'o', ' I, have']);
+      ).toEqual(['So ', 'I', ', have']);
     });
 
     it('punct on last word', () => {
@@ -218,14 +218,24 @@ describe('splitChunkAtOrp', () => {
           tok('I', { index: 1 }),
           tok('have', { index: 2, trailingPunctuation: '.' }),
         ]),
-      ).toEqual(['S', 'o', ' I have.']);
+      ).toEqual(['So ', 'I', ' have.']);
+    });
+
+    it('punct on first word (before anchor)', () => {
+      expect(
+        splitChunkAtOrp([
+          tok('So', { index: 0, trailingPunctuation: ',' }),
+          tok('I', { index: 1 }),
+          tok('have', { index: 2 }),
+        ]),
+      ).toEqual(['So, ', 'I', ' have']);
     });
   });
 
-  // --- Group 5: Chunk size 4 ---
+  // --- Group 5: Chunk size 4 (anchor = word 2, index 1) ---
 
   describe('chunk size 4', () => {
-    it('"the" + "quick" + "brown" + "fox"', () => {
+    it('"the" + "quick" + "brown" + "fox" — anchor on "quick"', () => {
       expect(
         splitChunkAtOrp([
           tok('the', { index: 0 }),
@@ -233,10 +243,10 @@ describe('splitChunkAtOrp', () => {
           tok('brown', { index: 2 }),
           tok('fox', { index: 3 }),
         ]),
-      ).toEqual(['t', 'h', 'e quick brown fox']);
+      ).toEqual(['the q', 'u', 'ick brown fox']);
     });
 
-    it('"I" + "am" + "a" + "man" — max lopsided', () => {
+    it('"I" + "am" + "a" + "man" — anchor on "am"', () => {
       expect(
         splitChunkAtOrp([
           tok('I', { index: 0 }),
@@ -244,10 +254,10 @@ describe('splitChunkAtOrp', () => {
           tok('a', { index: 2 }),
           tok('man', { index: 3 }),
         ]),
-      ).toEqual(['', 'I', ' am a man']);
+      ).toEqual(['I a', 'm', ' a man']);
     });
 
-    it('"with" + "deep" + "calm" + "mind"', () => {
+    it('"with" + "deep" + "calm" + "mind" — anchor on "deep"', () => {
       expect(
         splitChunkAtOrp([
           tok('with', { index: 0 }),
@@ -255,10 +265,10 @@ describe('splitChunkAtOrp', () => {
           tok('calm', { index: 2 }),
           tok('mind', { index: 3 }),
         ]),
-      ).toEqual(['w', 'i', 'th deep calm mind']);
+      ).toEqual(['with d', 'e', 'ep calm mind']);
     });
 
-    it('Pāli: "Evaṁ" + "me" + "sutaṁ" + "ekaṁ"', () => {
+    it('Pāli: "Evaṁ" + "me" + "sutaṁ" + "ekaṁ" — anchor on "me"', () => {
       expect(
         splitChunkAtOrp([
           tok('Evaṁ', { index: 0 }),
@@ -266,10 +276,10 @@ describe('splitChunkAtOrp', () => {
           tok('sutaṁ', { index: 2 }),
           tok('ekaṁ', { index: 3 }),
         ]),
-      ).toEqual(['E', 'v', 'aṁ me sutaṁ ekaṁ']);
+      ).toEqual(['Evaṁ m', 'e', ' sutaṁ ekaṁ']);
     });
 
-    it('punct on multiple words', () => {
+    it('punct on pre-anchor and post-anchor words', () => {
       expect(
         splitChunkAtOrp([
           tok('So', { index: 0, trailingPunctuation: ',' }),
@@ -277,7 +287,30 @@ describe('splitChunkAtOrp', () => {
           tok('have', { index: 2 }),
           tok('heard', { index: 3, trailingPunctuation: '.' }),
         ]),
-      ).toEqual(['S', 'o', ', I have heard.']);
+      ).toEqual(['So, ', 'I', ' have heard.']);
+    });
+
+    it('screenshot case: "things." + "Listen" + "and" + "apply"', () => {
+      expect(
+        splitChunkAtOrp([
+          tok('things', { index: 0, trailingPunctuation: '.' }),
+          tok('Listen', { index: 1 }),
+          tok('and', { index: 2 }),
+          tok('apply', { index: 3 }),
+        ]),
+      ).toEqual(['things. Li', 's', 'ten and apply']);
+    });
+
+    it('screenshot case: "Because" + "they" + "haven\'t" + "completely"', () => {
+      // "they" is 4 chars → ORP index 1 → "h"
+      expect(
+        splitChunkAtOrp([
+          tok('Because', { index: 0 }),
+          tok('they', { index: 1 }),
+          tok("haven\u2019t", { index: 2 }),
+          tok('completely', { index: 3 }),
+        ]),
+      ).toEqual(['Because t', 'h', "ey haven\u2019t completely"]);
     });
   });
 
@@ -380,7 +413,7 @@ describe('RSVPDisplay', () => {
     expect(screen.getByTestId('orp-after')).toHaveTextContent('dho');
   });
 
-  it('only highlights ONE ORP char in multi-word chunk', () => {
+  it('only highlights ONE ORP char in multi-word chunk (center word)', () => {
     render(
       <RSVPDisplay
         chunk={[tok('So', { index: 0 }), tok('I', { index: 1 }), tok('have', { index: 2 })]}
@@ -389,10 +422,11 @@ describe('RSVPDisplay', () => {
       />,
     );
 
-    // Only one orp-char element in the DOM
+    // Only one orp-char element — anchored on center word "I"
     expect(screen.getAllByTestId('orp-char')).toHaveLength(1);
-    expect(screen.getByTestId('orp-char')).toHaveTextContent('o');
-    expect(screen.getByTestId('orp-after')).toHaveTextContent('I have');
+    expect(screen.getByTestId('orp-char')).toHaveTextContent('I');
+    expect(screen.getByTestId('orp-before')).toHaveTextContent('So');
+    expect(screen.getByTestId('orp-after')).toHaveTextContent('have');
   });
 
   it('shows empty state when chunk is null', () => {
