@@ -4,7 +4,7 @@ Date: 2026-03-05
 
 ## 1. Audit Summary
 
-Status: **Ready after final governance step**.
+Status: **V1 launch-ready**.
 
 Completed technical checks:
 
@@ -46,15 +46,15 @@ Completed technical checks:
    1. `.env.local` file mode tightened to `600`.
    2. Added `.cache` and `logs` to `.gitignore`.
 
-## 3. Remaining Mandatory Step Before V1 Launch
+## 3. Governance Status
 
-1. Enable branch protection on `main`:
-   1. Require pull request.
-   2. Require status checks to pass before merge.
-   3. Block force-push and branch deletion.
-   4. Require conversation resolution.
+Branch protection is now enabled on `main` with:
 
-Note: this is intentionally left as the final governance switch after pipeline changes are merged and checks are green.
+1. Required checks: `secret-scan`, `checks`.
+2. Required PR approval count: `1`.
+3. Force push disabled.
+4. Branch deletion disabled.
+5. Conversation resolution required.
 
 ## 4. Post-Launch (Day 1-3)
 
