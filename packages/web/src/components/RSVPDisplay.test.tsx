@@ -22,10 +22,13 @@ function tok(
 
 // ---------------------------------------------------------------------------
 // splitChunkAtOrp — pure function unit tests
+//
+// The algorithm picks the anchor word that minimizes |left.length - right.length|.
+// Ties are broken by preferring the earlier (lower) index.
 // ---------------------------------------------------------------------------
 
 describe('splitChunkAtOrp', () => {
-  // --- Group 1: Single-word ORP splitting ---
+  // --- Group 1: Single-word ORP splitting (no anchor choice) ---
 
   describe('single-word splits', () => {
     it('1-char word "I" → ORP index 0', () => {
@@ -109,28 +112,36 @@ describe('splitChunkAtOrp', () => {
     });
   });
 
-  // --- Group 3: Chunk size 2 ---
+  // --- Group 3: Chunk size 2 (anchor chosen by min-imbalance) ---
 
   describe('chunk size 2', () => {
-    it('"So" + "I" — short + short', () => {
+    it('"So" + "I" — anchor 0 (imbalance 1 vs 3)', () => {
+      // A0: before "S"(1), after " I"(2) → imbalance 1
+      // A1: before "So "(3), after ""(0) → imbalance 3
       expect(
         splitChunkAtOrp([tok('So', { index: 0 }), tok('I', { index: 1 })]),
       ).toEqual(['S', 'o', ' I']);
     });
 
-    it('"the" + "Buddha" — short + long', () => {
+    it('"the" + "Buddha" — anchor 1 better balanced', () => {
+      // A0: before "t"(1), after "e Buddha"(8) → imbalance 7
+      // A1: before "the Bu"(6), after "dha"(3) → imbalance 3 ← wins
       expect(
         splitChunkAtOrp([tok('the', { index: 0 }), tok('Buddha', { index: 1 })]),
-      ).toEqual(['t', 'h', 'e Buddha']);
+      ).toEqual(['the Bu', 'd', 'dha']);
     });
 
-    it('"I" + "know" — 1-char anchor', () => {
+    it('"I" + "know" — anchor 1 better balanced', () => {
+      // A0: before ""(0), after " know"(5) → imbalance 5
+      // A1: before "I k"(3), after "ow"(2) → imbalance 1 ← wins
       expect(
         splitChunkAtOrp([tok('I', { index: 0 }), tok('know', { index: 1 })]),
-      ).toEqual(['', 'I', ' know']);
+      ).toEqual(['I k', 'n', 'ow']);
     });
 
-    it('"concentration" + "is" — long anchor + short', () => {
+    it('"concentration" + "is" — anchor 0 (long first word)', () => {
+      // A0: before "con"(3), after "entration is"(12) → imbalance 9
+      // A1: before "concentration i"(15), after ""(0) → imbalance 15
       expect(
         splitChunkAtOrp([
           tok('concentration', { index: 0 }),
@@ -139,7 +150,9 @@ describe('splitChunkAtOrp', () => {
       ).toEqual(['con', 'c', 'entration is']);
     });
 
-    it('trailing punct on first word carries into after column', () => {
+    it('trailing punct on first word — anchor 0', () => {
+      // A0: before "h"(1), after "ard. So"(7) → imbalance 6
+      // A1: before "heard. S"(8), after ""(0) → imbalance 8
       expect(
         splitChunkAtOrp([
           tok('heard', { index: 0, trailingPunctuation: '.' }),
@@ -148,7 +161,10 @@ describe('splitChunkAtOrp', () => {
       ).toEqual(['h', 'e', 'ard. So']);
     });
 
-    it('trailing punct on second word appears at end', () => {
+    it('trailing punct on second word — tie broken by earlier index', () => {
+      // A0: before "S"(1), after " I,"(3) → imbalance 2
+      // A1: before "So "(3), after ","(1) → imbalance 2
+      // Tie → prefer A0
       expect(
         splitChunkAtOrp([
           tok('So', { index: 0 }),
@@ -158,10 +174,11 @@ describe('splitChunkAtOrp', () => {
     });
   });
 
-  // --- Group 4: Chunk size 3 (anchor = word 2, index 1) ---
+  // --- Group 4: Chunk size 3 ---
 
   describe('chunk size 3', () => {
-    it('"So" + "I" + "have" — anchor on "I"', () => {
+    it('"So" + "I" + "have" — anchor on "I" (imbalance 2)', () => {
+      // A0: |1-7|=6, A1: |3-5|=2, A2: |6-2|=4 → A1 wins
       expect(
         splitChunkAtOrp([
           tok('So', { index: 0 }),
@@ -171,7 +188,8 @@ describe('splitChunkAtOrp', () => {
       ).toEqual(['So ', 'I', ' have']);
     });
 
-    it('"I" + "am" + "a" — anchor on "am"', () => {
+    it('"I" + "am" + "a" — anchor on "am" (imbalance 1)', () => {
+      // A0: |0-5|=5, A1: |3-2|=1, A2: |5-0|=5 → A1 wins
       expect(
         splitChunkAtOrp([
           tok('I', { index: 0 }),
@@ -181,7 +199,8 @@ describe('splitChunkAtOrp', () => {
       ).toEqual(['I a', 'm', ' a']);
     });
 
-    it('"the" + "great" + "king" — anchor on "great"', () => {
+    it('"the" + "great" + "king" — anchor on "great" (imbalance 3)', () => {
+      // A0: |1-12|=11, A1: |5-8|=3, A2: |11-2|=9 → A1 wins
       expect(
         splitChunkAtOrp([
           tok('the', { index: 0 }),
@@ -191,7 +210,8 @@ describe('splitChunkAtOrp', () => {
       ).toEqual(['the g', 'r', 'eat king']);
     });
 
-    it('"understanding" + "of" + "the" — anchor on "of"', () => {
+    it('"understanding" + "of" + "the" — anchor on "of" (imbalance 11)', () => {
+      // A0: |3-17|=14, A1: |15-4|=11, A2: |18-1|=17 → A1 wins (least bad)
       expect(
         splitChunkAtOrp([
           tok('understanding', { index: 0 }),
@@ -232,10 +252,11 @@ describe('splitChunkAtOrp', () => {
     });
   });
 
-  // --- Group 5: Chunk size 4 (anchor = word 2, index 1) ---
+  // --- Group 5: Chunk size 4 (anchor chosen by min-imbalance) ---
 
   describe('chunk size 4', () => {
-    it('"the" + "quick" + "brown" + "fox" — anchor on "quick"', () => {
+    it('"the" + "quick" + "brown" + "fox" — anchor on "brown"', () => {
+      // A0: 16, A1: 8, A2: 4, A3: 16 → A2 wins
       expect(
         splitChunkAtOrp([
           tok('the', { index: 0 }),
@@ -243,10 +264,11 @@ describe('splitChunkAtOrp', () => {
           tok('brown', { index: 2 }),
           tok('fox', { index: 3 }),
         ]),
-      ).toEqual(['the q', 'u', 'ick brown fox']);
+      ).toEqual(['the quick b', 'r', 'own fox']);
     });
 
-    it('"I" + "am" + "a" + "man" — anchor on "am"', () => {
+    it('"I" + "am" + "a" + "man" — anchor on "a"', () => {
+      // A0: 9, A1: 3, A2: 1, A3: 7 → A2 wins
       expect(
         splitChunkAtOrp([
           tok('I', { index: 0 }),
@@ -254,10 +276,11 @@ describe('splitChunkAtOrp', () => {
           tok('a', { index: 2 }),
           tok('man', { index: 3 }),
         ]),
-      ).toEqual(['I a', 'm', ' a man']);
+      ).toEqual(['I am ', 'a', ' man']);
     });
 
-    it('"with" + "deep" + "calm" + "mind" — anchor on "deep"', () => {
+    it('"with" + "deep" + "calm" + "mind" — anchor on "calm"', () => {
+      // A0: 16, A1: 6, A2: 4, A3: 14 → A2 wins
       expect(
         splitChunkAtOrp([
           tok('with', { index: 0 }),
@@ -265,10 +288,11 @@ describe('splitChunkAtOrp', () => {
           tok('calm', { index: 2 }),
           tok('mind', { index: 3 }),
         ]),
-      ).toEqual(['with d', 'e', 'ep calm mind']);
+      ).toEqual(['with deep c', 'a', 'lm mind']);
     });
 
-    it('Pāli: "Evaṁ" + "me" + "sutaṁ" + "ekaṁ" — anchor on "me"', () => {
+    it('Pāli: "Evaṁ" + "me" + "sutaṁ" + "ekaṁ" — anchor on "sutaṁ"', () => {
+      // A0: 16, A1: 5, A2: 1, A3: 13 → A2 wins
       expect(
         splitChunkAtOrp([
           tok('Evaṁ', { index: 0 }),
@@ -276,10 +300,11 @@ describe('splitChunkAtOrp', () => {
           tok('sutaṁ', { index: 2 }),
           tok('ekaṁ', { index: 3 }),
         ]),
-      ).toEqual(['Evaṁ m', 'e', ' sutaṁ ekaṁ']);
+      ).toEqual(['Evaṁ me s', 'u', 'taṁ ekaṁ']);
     });
 
     it('punct on pre-anchor and post-anchor words', () => {
+      // A2 "have" → before "So, I h"(7), after "ve heard."(9) → imbalance 2
       expect(
         splitChunkAtOrp([
           tok('So', { index: 0, trailingPunctuation: ',' }),
@@ -287,10 +312,11 @@ describe('splitChunkAtOrp', () => {
           tok('have', { index: 2 }),
           tok('heard', { index: 3, trailingPunctuation: '.' }),
         ]),
-      ).toEqual(['So, ', 'I', ' have heard.']);
+      ).toEqual(['So, I h', 'a', 've heard.']);
     });
 
-    it('screenshot case: "things." + "Listen" + "and" + "apply"', () => {
+    it('screenshot: "things." + "Listen" + "and" + "apply" — anchor on "Listen"', () => {
+      // A0: 19, A1: 3, A2: 9, A3: 17 → A1 wins (imbalance 3)
       expect(
         splitChunkAtOrp([
           tok('things', { index: 0, trailingPunctuation: '.' }),
@@ -301,8 +327,8 @@ describe('splitChunkAtOrp', () => {
       ).toEqual(['things. Li', 's', 'ten and apply']);
     });
 
-    it('screenshot case: "Because" + "they" + "haven\'t" + "completely"', () => {
-      // "they" is 4 chars → ORP index 1 → "h"
+    it('screenshot: "Because" + "they" + "haven\'t" + "completely"', () => {
+      // A2 "haven\u2019t" → before "Because they ha"(15), after "en\u2019t completely"(15) → imbalance 0!
       expect(
         splitChunkAtOrp([
           tok('Because', { index: 0 }),
@@ -310,7 +336,44 @@ describe('splitChunkAtOrp', () => {
           tok("haven\u2019t", { index: 2 }),
           tok('completely', { index: 3 }),
         ]),
-      ).toEqual(['Because t', 'h', "ey haven\u2019t completely"]);
+      ).toEqual(['Because they ha', 'v', "en\u2019t completely"]);
+    });
+
+    it('screenshot: "addressed" + "the" + "mendicants," + "\u201CMendicants!\u201D"', () => {
+      // A2 "mendicants" → before "addressed the men"(17), after "icants, \u201CMendicants!\u201D"(21) → imbalance 4
+      expect(
+        splitChunkAtOrp([
+          tok('addressed', { index: 0 }),
+          tok('the', { index: 1 }),
+          tok('mendicants', { index: 2, trailingPunctuation: ',' }),
+          tok('\u201CMendicants!\u201D', { index: 3 }),
+        ]),
+      ).toEqual(['addressed the men', 'd', 'icants, \u201CMendicants!\u201D']);
+    });
+
+    it('screenshot: "\u201CTake" + "an" + "unlearned" + "ordinary"', () => {
+      // A2 "unlearned" → before "\u201CTake an un"(11), after "earned ordinary"(15) → imbalance 4
+      expect(
+        splitChunkAtOrp([
+          tok('\u201CTake', { index: 0 }),
+          tok('an', { index: 1 }),
+          tok('unlearned', { index: 2 }),
+          tok('ordinary', { index: 3 }),
+        ]),
+      ).toEqual(['\u201CTake an un', 'l', 'earned ordinary']);
+    });
+
+    it('long first two words + short last two — anchor shifts left', () => {
+      // "extraordinary"(13ch,ORP 3) + "circumstances"(13ch,ORP 3) + "of" + "it"
+      // A1 "circumstances" → before "extraordinary cir"(17), after "umstances of it"(15) → imbalance 2
+      expect(
+        splitChunkAtOrp([
+          tok('extraordinary', { index: 0 }),
+          tok('circumstances', { index: 1 }),
+          tok('of', { index: 2 }),
+          tok('it', { index: 3 }),
+        ]),
+      ).toEqual(['extraordinary cir', 'c', 'umstances of it']);
     });
   });
 
@@ -321,8 +384,7 @@ describe('splitChunkAtOrp', () => {
       expect(splitChunkAtOrp([tok('Evaṁ')])).toEqual(['E', 'v', 'aṁ']);
     });
 
-    it('"Mūlapariyāya" — long Pāli with macrons (13 chars)', () => {
-      // M-ū-l-a-p-a-r-i-y-ā-y-a (13 chars) → ORP index 3 → "a"
+    it('"Mūlapariyāya" — long Pāli with macrons', () => {
       const chars = [...'Mūlapariyāya'];
       expect(chars.length).toBe(12);
       // 12 chars → ORP index 3
@@ -334,12 +396,10 @@ describe('splitChunkAtOrp', () => {
     });
 
     it('"Ñāṇa" — ORP is a diacritic char', () => {
-      // Ñ-ā-ṇ-a (4 chars) → ORP index 1 → "ā"
       expect(splitChunkAtOrp([tok('Ñāṇa')])).toEqual(['Ñ', 'ā', 'ṇa']);
     });
 
     it('"saṅkhārā" — underdot in word', () => {
-      // s-a-ṅ-k-h-ā-r-ā (8 chars) → ORP index 2 → "ṅ"
       expect(splitChunkAtOrp([tok('saṅkhārā')])).toEqual(['sa', 'ṅ', 'khārā']);
     });
   });
@@ -360,17 +420,14 @@ describe('splitChunkAtOrp', () => {
     });
 
     it('leading quote in word "\'Hello" → quote shifts index', () => {
-      // '-H-e-l-l-o (6 chars) → ORP index 2 → "e"
       expect(splitChunkAtOrp([tok("'Hello")])).toEqual(["'H", 'e', 'llo']);
     });
 
     it('"don\'t" — apostrophe does not interfere', () => {
-      // d-o-n-'-t (5 chars) → ORP index 1 → "o"
       expect(splitChunkAtOrp([tok("don't")])).toEqual(['d', 'o', "n't"]);
     });
 
     it('"well-known" — hyphenated word (10 chars)', () => {
-      // w-e-l-l---k-n-o-w-n (10 chars) → ORP index 3 → "l"
       expect(splitChunkAtOrp([tok('well-known')])).toEqual(['wel', 'l', '-known']);
     });
 
@@ -413,7 +470,7 @@ describe('RSVPDisplay', () => {
     expect(screen.getByTestId('orp-after')).toHaveTextContent('dho');
   });
 
-  it('only highlights ONE ORP char in multi-word chunk (center word)', () => {
+  it('only highlights ONE ORP char in multi-word chunk', () => {
     render(
       <RSVPDisplay
         chunk={[tok('So', { index: 0 }), tok('I', { index: 1 }), tok('have', { index: 2 })]}
@@ -422,7 +479,7 @@ describe('RSVPDisplay', () => {
       />,
     );
 
-    // Only one orp-char element — anchored on center word "I"
+    // Only one orp-char element — anchored on best-balanced word "I"
     expect(screen.getAllByTestId('orp-char')).toHaveLength(1);
     expect(screen.getByTestId('orp-char')).toHaveTextContent('I');
     expect(screen.getByTestId('orp-before')).toHaveTextContent('So');
@@ -471,7 +528,6 @@ describe('RSVPDisplay', () => {
     const { container } = render(
       <RSVPDisplay chunk={[tok('test')]} fontFamily="serif" fontSize="normal" />,
     );
-    // Both triangles should exist as children of the section
     const section = container.querySelector('section');
     // Top and bottom triangles + the grid = 3 children
     expect(section?.children.length).toBe(3);
