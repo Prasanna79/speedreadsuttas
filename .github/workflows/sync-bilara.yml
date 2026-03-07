@@ -36,10 +36,10 @@ jobs:
       DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
     steps:
       - name: Checkout app repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout bilara-data published
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: suttacentral/bilara-data
           ref: published
