@@ -3,7 +3,15 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'marketing/**'
+      - 'debug/**'
+      - '**/*.md'
   pull_request:
+    paths-ignore:
+      - 'marketing/**'
+      - 'debug/**'
+      - '**/*.md'
 
 permissions:
   contents: read
