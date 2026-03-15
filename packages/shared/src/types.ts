@@ -3,7 +3,7 @@ export interface Segment {
   text: string;
 }
 
-export type FontSize = 'normal' | 'large' | 'xlarge';
+export type FontSize = 'small' | 'normal' | 'large' | 'xlarge';
 export type FontFamily = 'serif' | 'mono' | 'openDyslexic';
 
 export interface Token {

@@ -153,4 +153,44 @@ describe('buildChunks', () => {
       ),
     ).toEqual([['said.”'], ['afterwards']]);
   });
+
+  it('merges punctuation-only tokens into the preceding chunk', () => {
+    const tokens = [
+      token('Form', 0, false, '.'),
+      token('...', 1),
+      token('Feeling', 2, false, '.'),
+    ];
+    expect(
+      buildChunks(tokens, { chunkSize: 1, fontSize: 'normal' }).map((chunk) =>
+        chunk.map((t) => t.word + t.trailingPunctuation),
+      ),
+    ).toEqual([['Form.', '...'], ['Feeling.']]);
+  });
+
+  it('merges leading punctuation-only token into the following chunk', () => {
+    const tokens = [
+      token('...', 0),
+      token('Feeling', 1, false, '.'),
+    ];
+    expect(
+      buildChunks(tokens, { chunkSize: 1, fontSize: 'normal' }).map((chunk) =>
+        chunk.map((t) => t.word + t.trailingPunctuation),
+      ),
+    ).toEqual([['...', 'Feeling.']]);
+  });
+
+  it('uses larger character budget for small font size', () => {
+    const tokens = [
+      token('dependent', 0),
+      token('origination', 1),
+      token('is', 2),
+      token('deep', 3),
+    ];
+    // small budget=24 fits "dependent origination is" (24 chars); normal budget=22 does not
+    expect(
+      buildChunks(tokens, { chunkSize: 4, fontSize: 'small' }).map((chunk) =>
+        chunk.map((t) => t.word),
+      ),
+    ).toEqual([['dependent', 'origination', 'is'], ['deep']]);
+  });
 });

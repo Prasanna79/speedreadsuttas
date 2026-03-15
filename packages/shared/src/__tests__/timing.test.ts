@@ -13,7 +13,7 @@ const token = (word: string, trailingPunctuation = ''): Token => ({
 
 describe('getOrpIndex', () => {
   it('returns mapped index for word lengths 1 to 20', () => {
-    const expected = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4];
+    const expected = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5];
     for (let length = 1; length <= 20; length += 1) {
       expect(getOrpIndex(length)).toBe(expected[length - 1]);
     }
@@ -21,7 +21,7 @@ describe('getOrpIndex', () => {
 
   it('handles lower and upper bounds', () => {
     expect(getOrpIndex(0)).toBe(0);
-    expect(getOrpIndex(999)).toBe(4);
+    expect(getOrpIndex(999)).toBe(5);
   });
 });
 

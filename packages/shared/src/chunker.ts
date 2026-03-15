@@ -36,13 +36,19 @@ function shouldCloseAfterToken(token: Token, chunkLength: number): boolean {
   return chunkLength >= 2 && isClauseFinalPunctuation(token.trailingPunctuation);
 }
 
+const PUNCTUATION_ONLY = /^[.,;:!?…—–'""')\]}]+$/u;
+
+function isPunctuationOnlyChunk(chunk: Token[]): boolean {
+  return chunk.every((token) => PUNCTUATION_ONLY.test(token.word));
+}
+
 export function buildChunks(tokens: Token[], options: BuildChunksOptions): Token[][] {
   const { chunkSize, fontSize } = options;
   if (!tokens.length || chunkSize < 1) {
     return [];
   }
 
-  const chunks: Token[][] = [];
+  const rawChunks: Token[][] = [];
   const charBudget = getChunkCharBudget(fontSize);
   let cursor = 0;
 
@@ -51,7 +57,7 @@ export function buildChunks(tokens: Token[], options: BuildChunksOptions): Token
     cursor += 1;
 
     if (shouldCloseAfterToken(currentChunk[0], currentChunk.length)) {
-      chunks.push(currentChunk);
+      rawChunks.push(currentChunk);
       continue;
     }
 
@@ -81,7 +87,23 @@ export function buildChunks(tokens: Token[], options: BuildChunksOptions): Token
         break;
       }
     }
-    chunks.push(currentChunk);
+    rawChunks.push(currentChunk);
+  }
+
+  // Merge punctuation-only chunks into adjacent chunks so they never display alone.
+  const chunks: Token[][] = [];
+  for (const chunk of rawChunks) {
+    if (isPunctuationOnlyChunk(chunk) && chunks.length > 0) {
+      chunks[chunks.length - 1].push(...chunk);
+    } else {
+      chunks.push(chunk);
+    }
+  }
+
+  // If the very first chunk is punctuation-only, merge it forward.
+  if (chunks.length > 1 && isPunctuationOnlyChunk(chunks[0])) {
+    chunks[1].unshift(...chunks[0]);
+    chunks.shift();
   }
 
   return chunks;

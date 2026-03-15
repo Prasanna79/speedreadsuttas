@@ -27,7 +27,7 @@ export function SettingsPanel({
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm ui-muted">Size</span>
-          {(['normal', 'large', 'xlarge'] as const).map((size) => (
+          {(['small', 'normal', 'large', 'xlarge'] as const).map((size) => (
             <button
               key={size}
               className={`rounded px-2 py-0.5 text-sm ${preferences.fontSize === size ? 'ui-button-active' : 'ui-button-inactive'}`}

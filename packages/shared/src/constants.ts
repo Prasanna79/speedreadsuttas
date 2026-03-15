@@ -6,6 +6,7 @@ export const WPM_STEP = 25;
 export const CHUNK_SIZE_DEFAULT = 1;
 export const CHUNK_SIZE_MAX = 4;
 export const CHUNK_CHAR_BUDGET = {
+  small: 24,
   normal: 22,
   large: 20,
   xlarge: 18,
@@ -62,5 +63,6 @@ export const NIKAYA_ALIASES = new Map<string, string>([
 
 // Index is word length, value is ORP character index.
 export const ORP_TABLE: number[] = [
-  0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4,
+//len: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
+      0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 5,
 ];

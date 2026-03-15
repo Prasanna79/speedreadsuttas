@@ -82,6 +82,23 @@ describe('tokenize', () => {
     expect(tokens[3]?.word).toBe('alpha');
   });
 
+  it('strips inline HTML tags from segment text', () => {
+    const segments: Segment[] = [
+      { id: 'sn22.59:1.1', text: 'This is <em>all</em> suffering.' },
+    ];
+    const tokens = tokenize(segments);
+    expect(tokens.map((t) => t.word)).toEqual(['This', 'is', 'all', 'suffering']);
+    expect(tokens[3]?.trailingPunctuation).toBe('.');
+  });
+
+  it('strips nested and multiple HTML tags', () => {
+    const segments: Segment[] = [
+      { id: 'sn22.59:1.1', text: '<i>Form</i> is <em>not</em> self.' },
+    ];
+    const tokens = tokenize(segments);
+    expect(tokens.map((t) => t.word)).toEqual(['Form', 'is', 'not', 'self']);
+  });
+
   it('splits inline em/en dash joins into separate tokens', () => {
     const segments: Segment[] = [{ id: 'mn19:1.1', text: 'awakening—I calm–mind' }];
     const tokens = tokenize(segments);

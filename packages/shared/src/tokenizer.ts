@@ -34,7 +34,7 @@ export function tokenize(segments: Segment[]): Token[] {
   let previousSection: number | null = null;
 
   for (const segment of sortedSegments) {
-    const text = segment.text.trim();
+    const text = segment.text.replace(/<[^>]*>/g, '').trim();
     if (!text) {
       continue;
     }

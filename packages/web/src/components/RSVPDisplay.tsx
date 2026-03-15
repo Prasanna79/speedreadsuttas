@@ -4,7 +4,7 @@ import { splitChunkAtOrp } from './orp-split';
 
 interface RSVPDisplayProps {
   chunk: Token[] | null;
-  fontSize: 'normal' | 'large' | 'xlarge';
+  fontSize: 'small' | 'normal' | 'large' | 'xlarge';
   fontFamily: 'serif' | 'mono' | 'openDyslexic';
 }
 
@@ -16,16 +16,19 @@ const fontFamilyClassMap = {
 
 const fontSizeClassMap = {
   serif: {
+    small: 'text-2xl',
     normal: 'text-4xl',
     large: 'text-5xl',
     xlarge: 'text-6xl',
   },
   mono: {
+    small: 'text-xl',
     normal: 'text-3xl',
     large: 'text-4xl',
     xlarge: 'text-5xl',
   },
   openDyslexic: {
+    small: 'text-xl',
     normal: 'text-3xl',
     large: 'text-4xl',
     xlarge: 'text-5xl',
@@ -52,7 +55,7 @@ export function RSVPDisplay({ chunk, fontSize, fontFamily }: RSVPDisplayProps) {
     <section
       aria-live="polite"
       aria-label={ariaLabel}
-      className="ui-panel relative flex min-h-56 items-center justify-center rounded px-6 py-10"
+      className="ui-panel relative flex min-h-56 landscape:min-h-32 items-center justify-center rounded px-6 py-10 landscape:py-4"
     >
       {/* 3-column grid: [1fr auto 1fr] anchors ORP at horizontal center */}
       <div

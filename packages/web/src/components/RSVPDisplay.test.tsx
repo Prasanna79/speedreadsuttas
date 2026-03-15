@@ -51,19 +51,19 @@ describe('splitChunkAtOrp', () => {
       expect(splitChunkAtOrp([tok('Buddho')])).toEqual(['Bu', 'd', 'dho']);
     });
 
-    it('9-char word "wonderful" → ORP index 2', () => {
-      expect(splitChunkAtOrp([tok('wonderful')])).toEqual(['wo', 'n', 'derful']);
+    it('9-char word "wonderful" → ORP index 3', () => {
+      expect(splitChunkAtOrp([tok('wonderful')])).toEqual(['won', 'd', 'erful']);
     });
 
     it('11-char word "information" → ORP index 3', () => {
       expect(splitChunkAtOrp([tok('information')])).toEqual(['inf', 'o', 'rmation']);
     });
 
-    it('16-char word "responsibilities" → ORP index 4', () => {
+    it('16-char word "responsibilities" → ORP index 5', () => {
       expect(splitChunkAtOrp([tok('responsibilities')])).toEqual([
-        'resp',
-        'o',
-        'nsibilities',
+        'respo',
+        'n',
+        'sibilities',
       ]);
     });
   });
@@ -387,11 +387,11 @@ describe('splitChunkAtOrp', () => {
     it('"Mūlapariyāya" — long Pāli with macrons', () => {
       const chars = [...'Mūlapariyāya'];
       expect(chars.length).toBe(12);
-      // 12 chars → ORP index 3
+      // 12 chars → ORP index 4
       expect(splitChunkAtOrp([tok('Mūlapariyāya')])).toEqual([
-        'Mūl',
-        'a',
-        'pariyāya',
+        'Mūla',
+        'p',
+        'ariyāya',
       ]);
     });
 
@@ -534,6 +534,24 @@ describe('RSVPDisplay', () => {
       />,
     );
     expect(screen.getByLabelText('So, I')).toBeInTheDocument();
+  });
+
+  it('applies small font size class for serif', () => {
+    render(<RSVPDisplay chunk={[tok('test')]} fontFamily="serif" fontSize="small" />);
+    expect(screen.getByTestId('orp-grid')).toHaveClass('text-2xl');
+  });
+
+  it('applies small font size class for mono', () => {
+    render(<RSVPDisplay chunk={[tok('test')]} fontFamily="mono" fontSize="small" />);
+    expect(screen.getByTestId('orp-grid')).toHaveClass('text-xl');
+  });
+
+  it('applies landscape-aware min-height class', () => {
+    const { container } = render(
+      <RSVPDisplay chunk={[tok('test')]} fontFamily="serif" fontSize="normal" />,
+    );
+    const section = container.querySelector('section');
+    expect(section?.className).toMatch(/landscape/);
   });
 
   it('renders triangle markers', () => {
