@@ -1,5 +1,5 @@
 import type { LastRead } from '@palispeedread/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LAST_READ_KEY } from '../lib/constants';
 
@@ -33,40 +33,38 @@ export function useLastRead({ uid, lang, author, position, isPlaying }: LastRead
 } {
   const [resumePosition, setResumePosition] = useState<number | null>(null);
 
-  const payload = useMemo<LastRead>(
-    () => ({ uid, lang, author, position, timestamp: Date.now() }),
-    [uid, lang, author, position],
-  );
+  const payloadRef = useRef<LastRead>({ uid, lang, author, position, timestamp: 0 });
 
   useEffect(() => {
+    payloadRef.current = { uid, lang, author, position, timestamp: Date.now() };
+  });
+
+  // Sync resume position from localStorage when route params change.
+  /* eslint-disable react-hooks/set-state-in-effect -- reading external state (localStorage) */
+  useEffect(() => {
     const stored = readStoredValue();
-    if (!stored) {
-      setResumePosition(null);
-      return;
-    }
-
-    if (stored.uid === uid && stored.lang === lang && stored.author === author) {
+    if (stored?.uid === uid && stored.lang === lang && stored.author === author) {
       setResumePosition(stored.position);
-      return;
+    } else {
+      setResumePosition(null);
     }
-
-    setResumePosition(null);
   }, [uid, lang, author]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!isPlaying) {
-      writeStoredValue(payload);
+      writeStoredValue(payloadRef.current);
       return;
     }
 
     const handle = window.setInterval(() => {
-      writeStoredValue(payload);
+      writeStoredValue(payloadRef.current);
     }, 30000);
 
     return () => {
       window.clearInterval(handle);
     };
-  }, [isPlaying, payload]);
+  }, [isPlaying, uid, lang, author, position]);
 
   return {
     resumePosition,

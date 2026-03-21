@@ -82,7 +82,7 @@ export function ReaderPage() {
 
   useEffect(() => {
     if (!normalizedUid || !lang || !author) {
-      setLoading(false);
+      setLoading(false); // eslint-disable-line react-hooks/set-state-in-effect -- guard clause
       return;
     }
 
@@ -117,7 +117,7 @@ export function ReaderPage() {
 
   useEffect(() => {
     if (!normalizedUid || !lang || !author) {
-      setNeighbors({ previousUid: null, nextUid: null });
+      setNeighbors({ previousUid: null, nextUid: null }); // eslint-disable-line react-hooks/set-state-in-effect -- guard clause
       return;
     }
 

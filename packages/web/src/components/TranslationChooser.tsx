@@ -17,21 +17,17 @@ export function TranslationChooser({ uid }: TranslationChooserProps) {
     fetchSuttaMeta(uid)
       .then((meta) => {
         setTranslations(meta.translations);
+        const preferred =
+          meta.translations.find((option) => option.lang === 'en' && option.author === 'sujato') ??
+          meta.translations[0];
+        if (preferred) {
+          setSelected(`${preferred.lang}:${preferred.author}`);
+        }
       })
       .catch(() => {
         setTranslations([]);
       });
   }, [uid]);
-
-  useEffect(() => {
-    if (translations.length === 0) {
-      return;
-    }
-
-    const preferred =
-      translations.find((option) => option.lang === 'en' && option.author === 'sujato') ?? translations[0];
-    setSelected(`${preferred.lang}:${preferred.author}`);
-  }, [translations]);
 
   const grouped = useMemo(() => {
     return translations.reduce<Record<string, TranslationOption[]>>((groups, option) => {

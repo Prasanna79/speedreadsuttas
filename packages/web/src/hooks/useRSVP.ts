@@ -57,7 +57,7 @@ export function useRSVP(
   }, [chunkSize, chunks, fontSize]);
 
   useEffect(() => {
-    setCurrentIndex((previous) => clampIndex(previous, chunks.length));
+    setCurrentIndex((previous) => clampIndex(previous, chunks.length)); // eslint-disable-line react-hooks/set-state-in-effect -- clamp index when chunks change
     if (chunks.length === 0) {
       setIsPlaying(false);
     }
@@ -77,7 +77,7 @@ export function useRSVP(
 
     const chunk = chunks[currentIndex];
     if (!chunk) {
-      setIsPlaying(false);
+      setIsPlaying(false); // eslint-disable-line react-hooks/set-state-in-effect -- stop when chunk missing
       return;
     }
 

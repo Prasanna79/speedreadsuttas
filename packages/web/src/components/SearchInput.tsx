@@ -18,7 +18,7 @@ export function SearchInput({ onSelectUid }: SearchInputProps) {
 
   useEffect(() => {
     if (value.trim().length < 1) {
-      setResults([]);
+      setResults([]); // eslint-disable-line react-hooks/set-state-in-effect -- clearing results on empty input is intentional
       return;
     }
 
