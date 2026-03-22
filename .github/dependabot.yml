@@ -5,8 +5,27 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 10
+    groups:
+      eslint:
+        patterns: ["eslint", "eslint-*", "@eslint/*", "@typescript-eslint/*"]
+      vite:
+        patterns: ["vite", "@vitejs/*", "@tailwindcss/vite", "tailwindcss"]
+      vitest:
+        patterns: ["vitest", "@vitest/*"]
+      react-types:
+        patterns: ["@types/react", "@types/react-dom"]
+      testing:
+        patterns: ["@testing-library/*", "jsdom"]
+      cloudflare:
+        patterns: ["@cloudflare/*", "wrangler"]
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
     open-pull-requests-limit: 10
+    groups:
+      actions:
+        patterns: ["*"]
