@@ -94,7 +94,7 @@ export async function collectBilaraTextFiles(bilaraDataDir: string): Promise<Fil
 
   for (const relativeRoot of TEXT_ROOTS) {
     const absoluteRoot = path.join(bilaraDataDir, relativeRoot);
-    let files: string[] = [];
+    let files: string[];
     try {
       files = await walkJsonFiles(absoluteRoot);
     } catch {
