@@ -200,8 +200,7 @@ describe('r2-sync', () => {
       const uploader = vi.fn(async () => {});
       await saveLastSyncedCommit('test-bucket', 'a'.repeat(40), uploader);
       expect(uploader).toHaveBeenCalledTimes(1);
-      expect(uploader.mock.calls[0][0]).toBe('test-bucket');
-      expect(uploader.mock.calls[0][1]).toBe(SYNC_SHA_KEY);
+      expect(uploader).toHaveBeenCalledWith('test-bucket', SYNC_SHA_KEY, expect.any(String));
     });
   });
 
