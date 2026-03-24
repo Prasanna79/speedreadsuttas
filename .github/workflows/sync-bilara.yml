@@ -31,7 +31,6 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       R2_BUCKET: speedreadsuttas-data
       BILARA_DATA_DIR: ${{ github.workspace }}/bilara-data
-      SYNC_STATE_FILE: ${{ github.workspace }}/.cache/r2-sync-manifest.json
       SYNC_SUMMARY_FILE: ${{ github.workspace }}/.cache/r2-sync-summary.json
       DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
     steps:
@@ -44,6 +43,7 @@ jobs:
           repository: suttacentral/bilara-data
           ref: published
           path: bilara-data
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
@@ -76,6 +76,7 @@ jobs:
             echo "- Uploaded: \`$(jq -r '.uploaded' "$SYNC_SUMMARY_FILE")\`"
             echo "- Unchanged: \`$(jq -r '.unchanged' "$SYNC_SUMMARY_FILE")\`"
             echo "- Removed (not deleted from R2): \`$(jq -r '.removed' "$SYNC_SUMMARY_FILE")\`"
+            echo "- Full sync: \`$(jq -r '.isFullSync' "$SYNC_SUMMARY_FILE")\`"
             echo "- Bucket: \`$(jq -r '.bucket' "$SYNC_SUMMARY_FILE")\`"
           } >> "$GITHUB_STEP_SUMMARY"
 

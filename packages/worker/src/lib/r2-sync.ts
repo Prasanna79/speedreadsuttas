@@ -1,34 +1,22 @@
-import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
-export interface FileHashEntry {
+export interface SyncFileEntry {
   key: string;
   filePath: string;
-  hash: string;
-}
-
-export interface SyncManifest {
-  files: Record<string, string>;
-}
-
-export interface SyncDiff {
-  toUpload: FileHashEntry[];
-  unchanged: number;
-  removed: string[];
 }
 
 export interface SyncOptions {
   bilaraDataDir: string;
   bucket: string;
-  stateFilePath: string;
   dryRun?: boolean;
   uploader?: (bucket: string, key: string, filePath: string) => Promise<void>;
+  downloader?: (bucket: string, key: string) => Promise<string>;
   onProgress?: (event: SyncProgressEvent) => void;
   uploadConcurrency?: number;
 }
@@ -43,6 +31,7 @@ export interface SyncProgressEvent {
   removed: number;
   uploaded: number;
   dryRun: boolean;
+  isFullSync: boolean;
   group?: Nikaya;
   groupIndex?: number;
   groupTotal?: number;
@@ -50,10 +39,14 @@ export interface SyncProgressEvent {
   key?: string;
 }
 
+export const SYNC_SHA_KEY = '_sync/last-commit.txt';
+
 const TEXT_ROOTS = [
   path.join('root', 'pli', 'ms', 'sutta'),
   'translation',
 ];
+
+const TEXT_ROOTS_POSIX = TEXT_ROOTS.map((root) => root.split(path.sep).join('/'));
 
 const NIKAYA_ORDER: Nikaya[] = ['dn', 'mn', 'sn', 'an', 'kn', 'other'];
 
@@ -79,18 +72,119 @@ async function walkJsonFiles(directory: string): Promise<string[]> {
   return files;
 }
 
-export async function hashFile(filePath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const hash = createHash('sha256');
-    const stream = createReadStream(filePath);
-    stream.on('error', reject);
-    stream.on('data', (chunk) => hash.update(chunk));
-    stream.on('end', () => resolve(hash.digest('hex')));
+// -- Git helpers ---------------------------------------------------------------
+
+export async function getHeadCommit(bilaraDataDir: string): Promise<string> {
+  const { stdout } = await execFileAsync('git', ['rev-parse', 'HEAD'], {
+    cwd: bilaraDataDir,
   });
+  return stdout.trim();
 }
 
-export async function collectBilaraTextFiles(bilaraDataDir: string): Promise<FileHashEntry[]> {
-  const discovered: FileHashEntry[] = [];
+export async function isAncestor(
+  bilaraDataDir: string,
+  oldSha: string,
+  newSha: string,
+): Promise<boolean> {
+  try {
+    await execFileAsync('git', ['merge-base', '--is-ancestor', oldSha, newSha], {
+      cwd: bilaraDataDir,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isEligiblePath(line: string): boolean {
+  if (!line) return false;
+  const basename = path.posix.basename(line);
+  if (!basename.endsWith('.json') || basename.startsWith('_')) return false;
+  return TEXT_ROOTS_POSIX.some((root) => line.startsWith(root));
+}
+
+export async function getGitDiffFiles(
+  bilaraDataDir: string,
+  oldSha: string,
+  newSha: string,
+): Promise<{ changed: string[]; deleted: string[] }> {
+  const { stdout } = await execFileAsync(
+    'git',
+    ['diff', '--name-status', '--no-renames', oldSha, newSha],
+    { cwd: bilaraDataDir, maxBuffer: 10 * 1024 * 1024 },
+  );
+
+  const changed: string[] = [];
+  const deleted: string[] = [];
+
+  for (const line of stdout.split('\n')) {
+    if (!line) continue;
+    const status = line[0];
+    const filePath = line.slice(1).trim();
+    if (!isEligiblePath(filePath)) continue;
+
+    if (status === 'D') {
+      deleted.push(filePath);
+    } else {
+      changed.push(filePath);
+    }
+  }
+
+  return { changed, deleted };
+}
+
+// -- R2 SHA state -------------------------------------------------------------
+
+async function wranglerDownloader(bucket: string, key: string): Promise<string> {
+  const { stdout } = await execFileAsync('pnpm', [
+    '--filter',
+    '@palispeedread/worker',
+    'exec',
+    'wrangler',
+    'r2',
+    'object',
+    'get',
+    `${bucket}/${key}`,
+    '--remote',
+    '--pipe',
+  ]);
+  return stdout.trim();
+}
+
+export async function getLastSyncedCommit(
+  bucket: string,
+  downloader: (bucket: string, key: string) => Promise<string>,
+): Promise<string | null> {
+  try {
+    const sha = await downloader(bucket, SYNC_SHA_KEY);
+    if (/^[0-9a-f]{40}$/.test(sha)) {
+      return sha;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveLastSyncedCommit(
+  bucket: string,
+  sha: string,
+  uploader: (bucket: string, key: string, filePath: string) => Promise<void>,
+): Promise<void> {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'r2-sync-sha-'));
+  const tmpFile = path.join(tmpDir, 'last-commit.txt');
+  try {
+    await writeFile(tmpFile, sha, 'utf8');
+    await uploader(bucket, SYNC_SHA_KEY, tmpFile);
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+// -- File collection (full-sync fallback) -------------------------------------
+
+export async function collectAllTextFiles(bilaraDataDir: string): Promise<SyncFileEntry[]> {
+  const entries: SyncFileEntry[] = [];
 
   for (const relativeRoot of TEXT_ROOTS) {
     const absoluteRoot = path.join(bilaraDataDir, relativeRoot);
@@ -103,53 +197,22 @@ export async function collectBilaraTextFiles(bilaraDataDir: string): Promise<Fil
 
     for (const filePath of files) {
       const relative = path.relative(bilaraDataDir, filePath);
-      const key = toPosixPath(relative);
-      discovered.push({
-        key,
-        filePath,
-        hash: await hashFile(filePath),
-      });
+      entries.push({ key: toPosixPath(relative), filePath });
     }
   }
 
-  return discovered.sort((left, right) => left.key.localeCompare(right.key));
+  return entries.sort((left, right) => left.key.localeCompare(right.key));
 }
 
-export async function loadSyncManifest(filePath: string): Promise<SyncManifest> {
-  try {
-    const raw = await readFile(filePath, 'utf8');
-    const parsed = JSON.parse(raw) as SyncManifest;
-    return {
-      files: parsed.files ?? {},
-    };
-  } catch {
-    return { files: {} };
-  }
+export async function countTrackedTextFiles(bilaraDataDir: string): Promise<number> {
+  const { stdout } = await execFileAsync('git', ['ls-files'], {
+    cwd: bilaraDataDir,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  return stdout.split('\n').filter(isEligiblePath).length;
 }
 
-export async function writeSyncManifest(filePath: string, entries: FileHashEntry[]): Promise<void> {
-  const manifest: SyncManifest = {
-    files: Object.fromEntries(entries.map((entry) => [entry.key, entry.hash])),
-  };
-
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-}
-
-export function diffSyncManifest(previous: SyncManifest, current: FileHashEntry[]): SyncDiff {
-  const currentMap = new Map(current.map((entry) => [entry.key, entry.hash]));
-  const toUpload = current.filter((entry) => previous.files[entry.key] !== entry.hash);
-  const unchanged = current.length - toUpload.length;
-  const removed = Object.keys(previous.files)
-    .filter((key) => !currentMap.has(key))
-    .sort((left, right) => left.localeCompare(right));
-
-  return {
-    toUpload,
-    unchanged,
-    removed,
-  };
-}
+// -- Nikaya sorting -----------------------------------------------------------
 
 function toNikaya(key: string): Nikaya {
   const marker = '/sutta/';
@@ -171,7 +234,7 @@ function toNikaya(key: string): Nikaya {
   }
 }
 
-function byNikayaThenKey(left: FileHashEntry, right: FileHashEntry): number {
+function byNikayaThenKey(left: SyncFileEntry, right: SyncFileEntry): number {
   const leftNikaya = toNikaya(left.key);
   const rightNikaya = toNikaya(right.key);
   const rankDiff = NIKAYA_ORDER.indexOf(leftNikaya) - NIKAYA_ORDER.indexOf(rightNikaya);
@@ -180,6 +243,8 @@ function byNikayaThenKey(left: FileHashEntry, right: FileHashEntry): number {
   }
   return left.key.localeCompare(right.key);
 }
+
+// -- Upload machinery ---------------------------------------------------------
 
 async function wranglerUploader(bucket: string, key: string, filePath: string): Promise<void> {
   await execFileAsync('pnpm', [
@@ -197,12 +262,27 @@ async function wranglerUploader(bucket: string, key: string, filePath: string): 
   ]);
 }
 
-const RETRYABLE_UPLOAD_PATTERN = /(502|503|504|bad gateway|failed to fetch|etimedout|econnreset)/i;
+const RETRYABLE_UPLOAD_PATTERN =
+  /(502|503|504|bad gateway|failed to fetch|fetch failed|etimedout|econnreset|econnrefused|connectivity)/i;
 
 const sleep = async (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+
+function isRetryableError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return RETRYABLE_UPLOAD_PATTERN.test(String(error));
+  }
+  if (RETRYABLE_UPLOAD_PATTERN.test(error.message)) {
+    return true;
+  }
+  const execError = error as { stderr?: string; stdout?: string };
+  return (
+    (typeof execError.stderr === 'string' && RETRYABLE_UPLOAD_PATTERN.test(execError.stderr)) ||
+    (typeof execError.stdout === 'string' && RETRYABLE_UPLOAD_PATTERN.test(execError.stdout))
+  );
+}
 
 async function uploadWithRetry(
   uploader: (bucket: string, key: string, filePath: string) => Promise<void>,
@@ -217,9 +297,7 @@ async function uploadWithRetry(
       await uploader(bucket, key, filePath);
       return;
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const shouldRetry = RETRYABLE_UPLOAD_PATTERN.test(message) && attempt < maxAttempts;
-      if (!shouldRetry) {
+      if (!isRetryableError(error) || attempt >= maxAttempts) {
         throw error;
       }
       await sleep(500 * attempt);
@@ -228,9 +306,9 @@ async function uploadWithRetry(
 }
 
 async function uploadEntriesWithConcurrency(
-  entries: FileHashEntry[],
+  entries: SyncFileEntry[],
   uploadConcurrency: number,
-  uploader: (entry: FileHashEntry) => Promise<void>,
+  uploader: (entry: SyncFileEntry) => Promise<void>,
 ): Promise<void> {
   if (entries.length === 0) {
     return;
@@ -253,33 +331,65 @@ async function uploadEntriesWithConcurrency(
   await Promise.all(workers);
 }
 
+// -- Main sync ----------------------------------------------------------------
+
 export async function syncBilaraToR2(options: SyncOptions): Promise<{
   total: number;
   uploaded: number;
   unchanged: number;
   removed: number;
+  isFullSync: boolean;
 }> {
-  const { bilaraDataDir, bucket, stateFilePath, dryRun = false } = options;
+  const { bilaraDataDir, bucket, dryRun = false } = options;
   const uploader = options.uploader ?? wranglerUploader;
-
-  const currentFiles = await collectBilaraTextFiles(bilaraDataDir);
-  const previousManifest = await loadSyncManifest(stateFilePath);
-  const diff = diffSyncManifest(previousManifest, currentFiles);
-  const sortedUploads = [...diff.toUpload].sort(byNikayaThenKey);
-  const total = currentFiles.length;
-  const toUpload = sortedUploads.length;
+  const downloader = options.downloader ?? wranglerDownloader;
   const onProgress = options.onProgress;
   const uploadConcurrency = Math.max(1, options.uploadConcurrency ?? 1);
 
-  onProgress?.({
-    type: 'plan',
+  const headSha = await getHeadCommit(bilaraDataDir);
+  const lastSha = await getLastSyncedCommit(bucket, downloader);
+
+  let filesToUpload: SyncFileEntry[];
+  let deleted: string[] = [];
+  let isFullSync: boolean;
+  let total: number;
+
+  if (lastSha && lastSha !== headSha && (await isAncestor(bilaraDataDir, lastSha, headSha))) {
+    // Incremental sync via git diff
+    const diff = await getGitDiffFiles(bilaraDataDir, lastSha, headSha);
+    filesToUpload = diff.changed.map((key) => ({
+      key,
+      filePath: path.join(bilaraDataDir, key),
+    }));
+    deleted = diff.deleted;
+    isFullSync = false;
+    total = await countTrackedTextFiles(bilaraDataDir);
+  } else if (lastSha === headSha) {
+    // No changes
+    filesToUpload = [];
+    isFullSync = false;
+    total = await countTrackedTextFiles(bilaraDataDir);
+  } else {
+    // Full sync: no prior SHA, unreachable SHA, or malformed
+    filesToUpload = await collectAllTextFiles(bilaraDataDir);
+    total = filesToUpload.length;
+    isFullSync = true;
+  }
+
+  const sortedUploads = [...filesToUpload].sort(byNikayaThenKey);
+  const toUploadCount = sortedUploads.length;
+  const unchanged = total - toUploadCount;
+
+  const progressBase = {
     total,
-    toUpload,
-    unchanged: diff.unchanged,
-    removed: diff.removed.length,
-    uploaded: 0,
+    toUpload: toUploadCount,
+    unchanged,
+    removed: deleted.length,
     dryRun,
-  });
+    isFullSync,
+  };
+
+  onProgress?.({ ...progressBase, type: 'plan', uploaded: 0 });
 
   if (!dryRun) {
     let uploaded = 0;
@@ -300,13 +410,9 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
       groupUploaded = 0;
 
       onProgress?.({
+        ...progressBase,
         type: 'group-start',
-        total,
-        toUpload,
-        unchanged: diff.unchanged,
-        removed: diff.removed.length,
         uploaded,
-        dryRun,
         group: currentGroup,
         groupIndex,
         groupTotal,
@@ -319,13 +425,9 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
         groupUploaded += 1;
 
         onProgress?.({
+          ...progressBase,
           type: 'file',
-          total,
-          toUpload,
-          unchanged: diff.unchanged,
-          removed: diff.removed.length,
           uploaded,
-          dryRun,
           group: currentGroup ?? group.nikaya,
           groupIndex,
           groupTotal,
@@ -335,37 +437,32 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
       });
 
       onProgress?.({
+        ...progressBase,
         type: 'group-complete',
-        total,
-        toUpload,
-        unchanged: diff.unchanged,
-        removed: diff.removed.length,
         uploaded,
-        dryRun,
         group: currentGroup,
         groupIndex,
         groupTotal,
         groupUploaded,
       });
     }
+
+    if (lastSha !== headSha) {
+      await saveLastSyncedCommit(bucket, headSha, uploader);
+    }
   }
 
-  await writeSyncManifest(stateFilePath, currentFiles);
-
   onProgress?.({
+    ...progressBase,
     type: 'complete',
-    total,
-    toUpload,
-    unchanged: diff.unchanged,
-    removed: diff.removed.length,
-    uploaded: dryRun ? 0 : toUpload,
-    dryRun,
+    uploaded: dryRun ? 0 : toUploadCount,
   });
 
   return {
     total,
-    uploaded: toUpload,
-    unchanged: diff.unchanged,
-    removed: diff.removed.length,
+    uploaded: toUploadCount,
+    unchanged,
+    removed: deleted.length,
+    isFullSync,
   };
 }
