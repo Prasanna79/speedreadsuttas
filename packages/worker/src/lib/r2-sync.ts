@@ -448,7 +448,7 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
     }
 
     if (lastSha !== headSha) {
-      await saveLastSyncedCommit(bucket, headSha, uploader);
+      await saveLastSyncedCommit(bucket, headSha, (b, k, f) => uploadWithRetry(uploader, b, k, f));
     }
   }
 
