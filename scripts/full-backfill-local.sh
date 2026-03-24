@@ -43,7 +43,6 @@ BILARA_DATA_DIR=../bilara-data \
 
 BILARA_DATA_DIR=../bilara-data \
 R2_BUCKET=speedreadsuttas-data \
-SYNC_STATE_FILE=.cache/r2-sync-manifest.json \
 SYNC_SUMMARY_FILE=.cache/r2-sync-summary.json \
 UPLOAD_CONCURRENCY="$UPLOAD_CONCURRENCY" \
 SYNC_PROGRESS_EVERY="$SYNC_PROGRESS_EVERY" \

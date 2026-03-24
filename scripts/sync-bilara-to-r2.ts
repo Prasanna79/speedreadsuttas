@@ -8,7 +8,6 @@ const now = (): string => new Date().toISOString();
 async function main(): Promise<void> {
   const bilaraDataDir = path.resolve(process.env.BILARA_DATA_DIR ?? '../bilara-data');
   const bucket = process.env.R2_BUCKET ?? 'speedreadsuttas-data';
-  const stateFilePath = path.resolve(process.env.SYNC_STATE_FILE ?? '.cache/r2-sync-manifest.json');
   const summaryFilePath = process.env.SYNC_SUMMARY_FILE ? path.resolve(process.env.SYNC_SUMMARY_FILE) : null;
   const dryRun = process.env.DRY_RUN === '1';
   const uploadConcurrency = Math.max(1, Number(process.env.UPLOAD_CONCURRENCY ?? '1'));
@@ -18,14 +17,13 @@ async function main(): Promise<void> {
   const result = await syncBilaraToR2({
     bilaraDataDir,
     bucket,
-    stateFilePath,
     dryRun,
     uploadConcurrency,
     onProgress: (event) => {
       if (event.type === 'plan') {
         // eslint-disable-next-line no-console
         console.log(
-          `[${now()}] plan total=${event.total} upload=${event.toUpload} unchanged=${event.unchanged} removed=${event.removed} dryRun=${event.dryRun} concurrency=${uploadConcurrency}`,
+          `[${now()}] plan total=${event.total} upload=${event.toUpload} unchanged=${event.unchanged} removed=${event.removed} dryRun=${event.dryRun} fullSync=${event.isFullSync} concurrency=${uploadConcurrency}`,
         );
         return;
       }
@@ -64,7 +62,7 @@ async function main(): Promise<void> {
       if (event.type === 'complete') {
         // eslint-disable-next-line no-console
         console.log(
-          `[${now()}] complete uploaded=${event.uploaded} total=${event.total} unchanged=${event.unchanged} removed=${event.removed}`,
+          `[${now()}] complete uploaded=${event.uploaded} total=${event.total} unchanged=${event.unchanged} removed=${event.removed} fullSync=${event.isFullSync}`,
         );
       }
     },
@@ -76,7 +74,6 @@ async function main(): Promise<void> {
     dryRun,
     uploadConcurrency,
     progressEvery,
-    stateFilePath,
     ...result,
   };
 
