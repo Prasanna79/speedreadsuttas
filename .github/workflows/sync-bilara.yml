@@ -26,12 +26,14 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       R2_BUCKET: speedreadsuttas-data
       BILARA_DATA_DIR: ${{ github.workspace }}/bilara-data
       SYNC_SUMMARY_FILE: ${{ github.workspace }}/.cache/r2-sync-summary.json
+      UPLOAD_CONCURRENCY: '10'
       DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
     steps:
       - name: Checkout app repo
