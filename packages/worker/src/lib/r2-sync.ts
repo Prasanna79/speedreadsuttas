@@ -349,13 +349,17 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
   const headSha = await getHeadCommit(bilaraDataDir);
   const lastSha = await getLastSyncedCommit(bucket, downloader);
 
+  // eslint-disable-next-line no-console
+  console.error(`[r2-sync] headSha=${headSha} lastSha=${lastSha ?? '(none)'}`);
+
   let filesToUpload: SyncFileEntry[];
   let deleted: string[] = [];
   let isFullSync: boolean;
   let total: number;
 
   if (lastSha && lastSha !== headSha && (await isAncestor(bilaraDataDir, lastSha, headSha))) {
-    // Incremental sync via git diff
+    // eslint-disable-next-line no-console
+    console.error('[r2-sync] decision=incremental (lastSha is ancestor of headSha)');
     const diff = await getGitDiffFiles(bilaraDataDir, lastSha, headSha);
     filesToUpload = diff.changed.map((key) => ({
       key,
@@ -365,12 +369,15 @@ export async function syncBilaraToR2(options: SyncOptions): Promise<{
     isFullSync = false;
     total = await countTrackedTextFiles(bilaraDataDir);
   } else if (lastSha === headSha) {
-    // No changes
+    // eslint-disable-next-line no-console
+    console.error('[r2-sync] decision=no-change (lastSha === headSha)');
     filesToUpload = [];
     isFullSync = false;
     total = await countTrackedTextFiles(bilaraDataDir);
   } else {
-    // Full sync: no prior SHA, unreachable SHA, or malformed
+    const reason = !lastSha ? 'no prior SHA in R2' : 'SHA unreachable or not ancestor';
+    // eslint-disable-next-line no-console
+    console.error(`[r2-sync] decision=full-sync (${reason})`);
     filesToUpload = await collectAllTextFiles(bilaraDataDir);
     total = filesToUpload.length;
     isFullSync = true;
