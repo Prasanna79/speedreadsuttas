@@ -21,8 +21,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.55.1",
-    "@types/node": "^25.5.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
     "@vitest/coverage-v8": "^4.1.0",
@@ -30,9 +30,9 @@
     "eslint": "^10.1.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.4.0",
-    "prettier": "^3.5.3",
-    "tsx": "^4.20.5",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.4",
     "typescript": "^5.8.2",
     "vitest": "^4.1.0"
   }
